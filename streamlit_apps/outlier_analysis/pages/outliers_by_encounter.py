@@ -4,7 +4,14 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from data import get_encounters_per_1000_by_encounter_group, get_encounters_per_1000_by_encounter_type, get_paid_per_encounter_by_encounter_group, get_paid_per_encounter_by_encounter_type, get_pmpm_by_encounter_group, get_pmpm_by_encounter_type
+from data import (
+    get_encounters_per_1000_by_encounter_group,
+    get_encounters_per_1000_by_encounter_type,
+    get_paid_per_encounter_by_encounter_group,
+    get_paid_per_encounter_by_encounter_type,
+    get_pmpm_by_encounter_group,
+    get_pmpm_by_encounter_type
+)
 
 # Add the repo root (analytics/) to sys.path so we can import shared modules
 sys.path.append(str(Path(__file__).resolve().parents[3]))
@@ -13,10 +20,6 @@ from shared import path_utils
 path_utils.add_repo_to_path(levels_up=3)
 
 conn = st.connection("snowflake")
-color_map = px.colors.qualitative.Plotly
-
-def get_colors_for_df(df, color_map):
-    return [color_map[etype] for etype in df['ENCOUNTER_GROUP']]
 
 pmpm_group = get_pmpm_by_encounter_group(conn).fillna('null')
 per_1000_group = get_encounters_per_1000_by_encounter_group(conn).fillna('null')
@@ -28,8 +31,11 @@ paid_per_type = get_paid_per_encounter_by_encounter_type(conn).fillna('null')
 
 encounter_groups = pmpm_group["ENCOUNTER_GROUP"].unique()
 
-color_discrete_map = {etype: px.colors.qualitative.Plotly[i % 10]
+color_map = {etype: px.colors.qualitative.Plotly[i % 10]
                       for i, etype in enumerate(encounter_groups)}
+
+def get_colors_for_df(df):
+    return [color_map[etype] for etype in df['ENCOUNTER_GROUP']]
 
 st.markdown(
     """
@@ -57,7 +63,7 @@ encounter_group_fig.add_trace(
     go.Bar(
         x=pmpm_group["PMPM"],
         y=pmpm_group["ENCOUNTER_GROUP"],
-        marker_color=get_colors_for_df(pmpm_group, color_discrete_map),
+        marker_color=get_colors_for_df(pmpm_group),
         text=[f"${x:.2f}" for x in pmpm_group["PMPM"]],
         orientation='h',
         showlegend=False,
@@ -70,7 +76,7 @@ encounter_group_fig.add_trace(
     go.Bar(
         x=per_1000_group["ENCOUNTERS_PER_1000"],
         y=per_1000_group["ENCOUNTER_GROUP"],
-        marker_color=get_colors_for_df(per_1000_group, color_discrete_map),
+        marker_color=get_colors_for_df(per_1000_group),
         text=[f"${x:.2f}" for x in per_1000_group["ENCOUNTERS_PER_1000"]],
         orientation='h',
         showlegend=False
@@ -83,7 +89,7 @@ encounter_group_fig.add_trace(
     go.Bar(
         x=paid_per_group["PAID_PER_ENCOUNTER"],
         y=paid_per_group["ENCOUNTER_GROUP"],
-        marker_color=get_colors_for_df(paid_per_group, color_discrete_map),
+        marker_color=get_colors_for_df(paid_per_group),
         text=[f"${x:.2f}" for x in paid_per_group["PAID_PER_ENCOUNTER"]],
         orientation='h',
         showlegend=False
@@ -118,7 +124,7 @@ encounter_type_fig.add_trace(
     go.Bar(
         x=pmpm_type["PMPM"],
         y=pmpm_type["ENCOUNTER_TYPE"],
-        marker_color=get_colors_for_df(pmpm_type, color_discrete_map),
+        marker_color=get_colors_for_df(pmpm_type),
         text=[f"${x:.2f}" for x in pmpm_type["PMPM"]],
         orientation='h',
         showlegend=False
@@ -131,7 +137,7 @@ encounter_type_fig.add_trace(
     go.Bar(
         x=per_1000_type["ENCOUNTERS_PER_1000"],
         y=per_1000_type["ENCOUNTER_TYPE"],
-        marker_color=get_colors_for_df(per_1000_type, color_discrete_map),
+        marker_color=get_colors_for_df(per_1000_type),
         text=[f"${x:.2f}" for x in per_1000_type["ENCOUNTERS_PER_1000"]],
         orientation='h',
         showlegend=False
@@ -144,7 +150,7 @@ encounter_type_fig.add_trace(
     go.Bar(
         x=paid_per_type["PAID_PER_ENCOUNTER"],
         y=paid_per_type["ENCOUNTER_TYPE"],
-        marker_color=get_colors_for_df(paid_per_type, color_discrete_map),
+        marker_color=get_colors_for_df(paid_per_type),
         text=[f"${x:.2f}" for x in paid_per_type["PAID_PER_ENCOUNTER"]],
         orientation='h',
         showlegend=False
@@ -166,9 +172,9 @@ encounter_type_fig.update_layout(
 
 st.plotly_chart(encounter_type_fig, use_container_width=True)
 
-legend_cols = st.columns(len(color_discrete_map))
+legend_cols = st.columns(len(color_map))
 
-for i, (encounter_group, color) in enumerate(color_discrete_map.items()):
+for i, (encounter_group, color) in enumerate(color_map.items()):
     with legend_cols[i]:
         st.markdown(
             f"<div style='display: flex; align-items: center; '>"
