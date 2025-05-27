@@ -6,7 +6,7 @@ import plotly.express as px
 import pandas as pd
 
 sys.path.append(str(Path(__file__).resolve().parents[3]))
-from shared.utils.outlier_helpers import (
+from data import (
     get_metrics_data,
     get_mean_paid,
     get_outlier_population_by_race,
