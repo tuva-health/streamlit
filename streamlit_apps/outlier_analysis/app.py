@@ -7,8 +7,10 @@ st.logo("assets/tuva_logo.png", size="large")
 
 # Importing pages for navigation
 dashboard_page = st.Page("pages/dashboard.py", title="Dashboard")
+outliers_by_encounter_page = st.Page("pages/outliers_by_encounter.py", title="Outliers By Encounter")
+outliers_by_diagnosis_page = st.Page("pages/outliers_by_diagnosis.py", title="Outliers By Diagnosis")
 
 # Setup navigation
-app = st.navigation([dashboard_page])
+app = st.navigation([dashboard_page, outliers_by_encounter_page, outliers_by_diagnosis_page])
 
 app.run()
