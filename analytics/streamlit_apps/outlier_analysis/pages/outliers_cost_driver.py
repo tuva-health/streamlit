@@ -3,6 +3,7 @@ from pathlib import Path
 import streamlit as st
 import streamlit.components.v1 as components
 import plotly.express as px
+import plotly.graph_objects as go
 import pandas as pd
 
 sys.path.append(str(Path(__file__).resolve().parents[3]))
@@ -11,6 +12,7 @@ from data import (
     get_mean_paid,
     get_outlier_population_by_race,
     get_outlier_population_by_state,
+    get_v24_risk_scores
 )
 from shared import path_utils
 
@@ -45,19 +47,19 @@ def display_metrics(metrics_data, year):
     col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 2, 4], gap="small")
     with col1:
         st.metric(label="Members", value=total_population, border=True)
-        st.metric("Mean Age (**Yrs**)", f"{mean_age:,.2f}", border=True)
+        st.metric("Mean Age **(Yrs)**", f"{mean_age:,.2f}", border=True)
 
     with col2:
-        st.metric("Percent Female (**%**)", f"{percent_female:.2f}", border=True)
+        st.metric("Percent Female **(%)**", f"{percent_female:.2f}", border=True)
         st.metric("Avg HCC Risk Score", "4.14", border=True)  # Replace with actual value if available
 
     with col3:
-        st.metric("Paid Amount (**$**)", total_paid, border=True)
-        st.metric("Paid PMPM (**$**)", f"{paid_pmpm:,.2f}", border=True)
+        st.metric("Paid Amount **($)**", total_paid, border=True)
+        st.metric("Paid PMPM **($)**", f"{paid_pmpm:,.2f}", border=True)
 
     with col4:
         st.metric("Encounter / 1000", f"{encounter_per_1000:.2f}", border=True)
-        st.metric("Paid / Encounter (**$**)", f"{paid_per_encounter:,.2f}", border=True)
+        st.metric("Paid / Encounter **($)**", f"{paid_per_encounter:,.2f}", border=True)
 
     with col5:
         st.markdown(
@@ -78,7 +80,7 @@ def display_metrics(metrics_data, year):
         """,
             unsafe_allow_html=True,
         )
-def plot_bar_chart(df, x, y, title, height=300):
+def plot_bar_chart(df, x, y, title, height=210):
         """Create a horizontal bar chart with Plotly."""
         fig = px.bar(
             df,
@@ -89,22 +91,48 @@ def plot_bar_chart(df, x, y, title, height=300):
             height=height,
         )
         fig.update_layout(
-            font=dict(size=12, family="verdana", color="#999EA3"),
             showlegend=False,
             margin=dict(r=80),
-            xaxis_title="",
-            yaxis_title="",
-            yaxis=dict(automargin=True),
+            xaxis_title=x,
+            yaxis_title=y,
+            yaxis=dict(
+                automargin=True,
+            ),
             title=title,
         )
         fig.update_traces(
             marker_color="#66B1E2",
             textposition="outside",
             texttemplate="%{text}%" if x == "PERCENTAGE" else "%{text}",
-            textfont=dict(size=12),
             cliponaxis=False,
         )
         return fig
+
+def plot_risk_scores(risk_scores):
+    """Plot risk scores distribution."""
+    # Calculate min, median, and max
+    min_val = risk_scores["RISK_SCORE"].min()
+    median_val = risk_scores["RISK_SCORE"].median()
+    max_val = risk_scores["RISK_SCORE"].max()
+
+    # Create a custom box plot showing only min, median, and max
+    fig = go.Figure()
+    fig.add_trace(go.Box(
+        y=[min_val, median_val, max_val],
+        boxpoints=False,
+        name="Risk Score",
+        marker_color="#66B1E2",
+        boxmean=True,
+        showlegend=False
+    ))
+    fig.update_layout(
+        title="Risk Score Distribution (Min, Median, Max)",
+        yaxis_title="V24 Risk Score",
+        xaxis_title="",
+        height=320
+    )
+
+    return fig
 
 def main():
     st.markdown(
@@ -126,6 +154,7 @@ def main():
     metrics_data["MEAN_PAID"] = mean_paid
     outlier_population_by_state = get_outlier_population_by_state(conn, year)
     outlier_population_by_race = get_outlier_population_by_race(conn, year)
+    v24_risk_scores = get_v24_risk_scores(conn, year)
 
     # --- Page Title and Description ---
     st.header("Outlier Cost Driver Dashboard", divider="grey")
@@ -138,35 +167,15 @@ def main():
     with st.container():
         graph1, graph2 = st.columns([1, 1], gap="large")
         with graph1:
-            st.subheader("Outlier Population by State")
             with st.container():
-                st.markdown(
-                    "<div style='padding-left:65px; font-size:1.2rem;'><b>State</b></div>",
-                    unsafe_allow_html=True,
-                )
-                fig = plot_bar_chart(outlier_population_by_state, "PERCENTAGE", "STATE", "", 800)
-                plot_html = fig.to_html(full_html=False, include_plotlyjs="cdn")
-                components.html(
-                    plot_html,
-                    height=400,
-                    scrolling=True,
-                )
-                st.markdown(
-                    "<div style='text-align:center; font-size:1.2rem;'><b>Percentage</b></div>",
-                    unsafe_allow_html=True,
-                )
+                fig = plot_bar_chart(outlier_population_by_state, "PERCENTAGE", "STATE", "Outlier Population by State", 650)
+                st.plotly_chart(fig, use_container_width=True)
         with graph2:
-            st.subheader("Outlier Population by Race")
-            st.markdown(
-                "<div style='padding-left:65px; font-size:1.2rem;'><b>Race</b></div>",
-                unsafe_allow_html=True,
-            )
-            fig = plot_bar_chart(outlier_population_by_race, "PERCENTAGE", "RACE", "")
+            fig = plot_bar_chart(outlier_population_by_race, "PERCENTAGE", "RACE", "Outlier Population by Race")
             st.plotly_chart(fig, use_container_width=True)
-            st.markdown(
-                "<div style='text-align:center; font-size:1.2rem;'><b>Percentage</b></div>",
-                unsafe_allow_html=True,
-            )
+
+            risk_score_fig = plot_risk_scores(v24_risk_scores)
+            st.plotly_chart(risk_score_fig, use_container_width=True)
 
 if __name__ == "__main__":
     main()

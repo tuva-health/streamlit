@@ -54,6 +54,16 @@ def get_outlier_population_by_state(_conn: str, year: str):
         FROM DEV_RAJAT.TEST.OUTLIER_MEMBER_MONTHS WHERE YEAR = {year} AND STATE IS NOT NULL GROUP BY STATE;
     """)
 
+@st.cache_data
+def get_v24_risk_scores(_conn: str, year: str):
+    return _conn.query(f"""
+        SELECT 
+            DISTINCT(MEMBER_ID)
+            , V24_RISK_SCORE AS RISK_SCORE
+        FROM DEV_RAJAT.TEST.OUTLIER_MEMBER_MONTHS
+        WHERE YEAR = {year} AND RISK_SCORE IS NOT NULL;
+    """)
+
 
 # OUTLIERS BY ENCOUNTER
 
