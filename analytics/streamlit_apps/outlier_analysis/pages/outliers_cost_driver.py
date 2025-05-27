@@ -3,7 +3,6 @@ from pathlib import Path
 import streamlit as st
 import streamlit.components.v1 as components
 import plotly.express as px
-import math
 import pandas as pd
 
 sys.path.append(str(Path(__file__).resolve().parents[3]))
@@ -26,7 +25,7 @@ def safe_extract(series, default=0, as_type=float):
     return default
 
 
-def display_metrics(metrics_data):
+def display_metrics(metrics_data, year):
     """Display summary metrics in columns."""
 
     # Extract and sanitize values
@@ -45,25 +44,25 @@ def display_metrics(metrics_data):
 
     col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 2, 4], gap="small")
     with col1:
-        st.metric("Members", total_population, border=True)
-        st.metric("Mean Age", f"{mean_age:,.2f}", border=True)
+        st.metric(label="Members", value=total_population, border=True)
+        st.metric("Mean Age (**Yrs**)", f"{mean_age:,.2f}", border=True)
 
     with col2:
-        st.metric("Percent Female", f"{percent_female:.2f}%", border=True)
+        st.metric("Percent Female (**%**)", f"{percent_female:.2f}", border=True)
         st.metric("Avg HCC Risk Score", "4.14", border=True)  # Replace with actual value if available
 
     with col3:
-        st.metric("Paid Amount", f"${total_paid:,.2f}", border=True)
-        st.metric("Paid PMPM", f"${paid_pmpm:,.2f}", border=True)
+        st.metric("Paid Amount (**$**)", total_paid, border=True)
+        st.metric("Paid PMPM (**$**)", f"{paid_pmpm:,.2f}", border=True)
 
     with col4:
-        st.metric("Encounter Per 1000", f"{encounter_per_1000:.2f}", border=True)
-        st.metric("Paid Per Encounter", f"${paid_per_encounter:,.2f}", border=True)
+        st.metric("Encounter / 1000", f"{encounter_per_1000:.2f}", border=True)
+        st.metric("Paid / Encounter (**$**)", f"{paid_per_encounter:,.2f}", border=True)
 
     with col5:
         st.markdown(
             f"""
-            **Data Source:** 2020 Medicare LDS 5% Sample  
+            **Data Source:** {year} Medicare LDS 5% Sample  
             **Inclusion Criteria:** All beneficiaries with annual claim costs > 2 std dev from mean (${mean_paid:.2f})
             """
         )
@@ -72,7 +71,8 @@ def display_metrics(metrics_data):
         """
         <style>
         [data-testid="stMetricValue"] {
-            font-size: 13px;
+            font-size: 14px;
+            font-weight: 700;
         }
         </style>
         """,
@@ -100,6 +100,7 @@ def plot_bar_chart(df, x, y, title, height=300):
         fig.update_traces(
             marker_color="#66B1E2",
             textposition="outside",
+            texttemplate="%{text}%" if x == "PERCENTAGE" else "%{text}",
             textfont=dict(size=12),
             cliponaxis=False,
         )
@@ -118,20 +119,21 @@ def main():
         """,
         unsafe_allow_html=True
     )
+    year = 2016
     conn = st.connection("snowflake")
-    mean_paid = get_mean_paid(conn, year="2016").iloc[0]
-    metrics_data = get_metrics_data(conn, year="2016")
+    mean_paid = get_mean_paid(conn, year).iloc[0]
+    metrics_data = get_metrics_data(conn, year)
     metrics_data["MEAN_PAID"] = mean_paid
-    outlier_population_by_state = get_outlier_population_by_state(conn, year="2017")
-    outlier_population_by_race = get_outlier_population_by_race(conn, year="2017")
+    outlier_population_by_state = get_outlier_population_by_state(conn, year)
+    outlier_population_by_race = get_outlier_population_by_race(conn, year)
 
     # --- Page Title and Description ---
-    st.header("Medicare LDS Outlier Cost Driver Dashboard", divider="grey")
+    st.header("Outlier Cost Driver Dashboard", divider="grey")
     st.markdown(
-        "This dashboard presents key metrics and visualizations for outlier cost drivers in the 2020 Medicare LDS 5% Sample."
+        f"This dashboard presents key metrics and visualizations for outlier cost drivers in the year {year}"
     )
 
-    display_metrics(metrics_data)
+    display_metrics(metrics_data, year)
 
     with st.container():
         graph1, graph2 = st.columns([1, 1], gap="large")
