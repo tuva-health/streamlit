@@ -77,7 +77,7 @@ encounter_group_fig.add_trace(
         x=per_1000_group["ENCOUNTERS_PER_1000"],
         y=per_1000_group["ENCOUNTER_GROUP"],
         marker_color=get_colors_for_df(per_1000_group),
-        text=[f"${x:.2f}" for x in per_1000_group["ENCOUNTERS_PER_1000"]],
+        text=[f"{x:.2f}" for x in per_1000_group["ENCOUNTERS_PER_1000"]],
         orientation='h',
         showlegend=False
     ),
@@ -138,7 +138,7 @@ encounter_type_fig.add_trace(
         x=per_1000_type["ENCOUNTERS_PER_1000"],
         y=per_1000_type["ENCOUNTER_TYPE"],
         marker_color=get_colors_for_df(per_1000_type),
-        text=[f"${x:.2f}" for x in per_1000_type["ENCOUNTERS_PER_1000"]],
+        text=[f"{x:.2f}" for x in per_1000_type["ENCOUNTERS_PER_1000"]],
         orientation='h',
         showlegend=False
     ),
