@@ -134,18 +134,6 @@ def plot_risk_scores(risk_scores):
     return fig
 
 def main():
-    st.markdown(
-        """
-        <style>
-            .stMainBlockContainer  {
-                padding-left: 1rem;
-                padding-right: 1rem;
-                padding-top: 3rem;
-            }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
     year = st.session_state.get("page_selector") if "page_selector" in st.session_state else None
     conn = st.connection("snowflake")
     mean_paid = get_mean_paid(conn, year).iloc[0]

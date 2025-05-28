@@ -77,87 +77,93 @@ def get_v24_risk_scores(_conn: str, year: str):
 # OUTLIERS BY ENCOUNTER
 
 @st.cache_data
-def get_member_count(_conn):
-    return _conn.query("SELECT COUNT(DISTINCT MEMBER_ID) as total FROM OUTLIER_MEMBER_MONTHS").iloc[0]['TOTAL']
+def get_member_count(_conn: str, year: str):
+    return _conn.query(f"SELECT COUNT(DISTINCT MEMBER_ID) as total FROM OUTLIER_MEMBER_MONTHS WHERE YEAR={year}").iloc[0]['TOTAL']
 
 
 @st.cache_data
-def get_encounter_count(_conn):
-    return _conn.query("SELECT COUNT(DISTINCT ENCOUNTER_ID) as total FROM outlier_claims_agg").iloc[0]['TOTAL']
+def get_encounter_count(_conn: str, year: str):
+    return _conn.query(f"SELECT COUNT(DISTINCT ENCOUNTER_ID) as total FROM OUTLIER_CLAIMS_AGG WHERE INCR_YEAR={year} ").iloc[0]['TOTAL']
 
 
 @st.cache_data
-def get_pmpm_by_encounter_group(_conn):
-    member_count = get_member_count(_conn)
+def get_pmpm_by_encounter_group(_conn: str, year: str):
+    member_count = get_member_count(_conn, year)
     return _conn.query(f"""
         SELECT
-            encounter_group,
+            ENCOUNTER_GROUP,
             SUM(PAID_AMOUNT) / {member_count} AS PMPM
-        FROM outlier_claims_agg
-        GROUP BY encounter_group ORDER BY encounter_group DESC
+        FROM OUTLIER_CLAIMS_AGG
+        WHERE INCR_YEAR={year}
+        GROUP BY ENCOUNTER_GROUP ORDER BY ENCOUNTER_GROUP DESC
     """)
 
 
 @st.cache_data
-def get_encounters_per_1000_by_encounter_group(_conn):
-    member_count = get_member_count(_conn)
+def get_encounters_per_1000_by_encounter_group(_conn: str, year: str):
+    member_count = get_member_count(_conn, year)
     return _conn.query(f"""
         SELECT
-            encounter_group,
-            COUNT(DISTINCT ENCOUNTER_ID) * 12000.0 / {member_count} AS ENCOUNTERS_PER_1000
-        FROM outlier_claims_agg
-        GROUP BY encounter_group ORDER BY encounter_group DESC
+            ENCOUNTER_GROUP,
+            (COUNT(DISTINCT ENCOUNTER_ID) * 12000.0) / {member_count} AS ENCOUNTERS_PER_1000
+        FROM OUTLIER_CLAIMS_AGG
+        WHERE INCR_YEAR={year}
+        GROUP BY ENCOUNTER_GROUP ORDER BY ENCOUNTER_GROUP DESC
     """)
 
 
 @st.cache_data
-def get_paid_per_encounter_by_encounter_group(_conn):
-    encounter_count = get_encounter_count(_conn)
+def get_paid_per_encounter_by_encounter_group(_conn: str, year: str):
+    encounter_count = get_encounter_count(_conn, year)
     return _conn.query(f"""
         SELECT
-            encounter_group,
+            ENCOUNTER_GROUP,
             SUM(PAID_AMOUNT) / {encounter_count} AS PAID_PER_ENCOUNTER
-        FROM outlier_claims_agg
-        GROUP BY encounter_group ORDER BY encounter_group DESC
+        FROM OUTLIER_CLAIMS_AGG
+        WHERE INCR_YEAR={year}
+        GROUP BY ENCOUNTER_GROUP ORDER BY ENCOUNTER_GROUP DESC
     """)
 
 @st.cache_data
-def get_pmpm_by_encounter_type(_conn):
-    member_count = get_member_count(_conn)
+def get_pmpm_by_encounter_type(_conn: str, year: str):
+    member_count = get_member_count(_conn, year)
     return _conn.query(f"""
         SELECT
-            encounter_group,
-            encounter_type,
+            ENCOUNTER_GROUP,
+            ENCOUNTER_TYPE,
             SUM(PAID_AMOUNT) / {member_count} AS PMPM
-        FROM outlier_claims_agg
-        GROUP BY encounter_group, encounter_type
-        ORDER BY encounter_type DESC
+        FROM OUTLIER_CLAIMS_AGG
+        WHERE INCR_YEAR={year}
+        GROUP BY ENCOUNTER_GROUP, ENCOUNTER_TYPE
+        ORDER BY ENCOUNTER_TYPE DESC
     """)
 
 
 @st.cache_data
-def get_encounters_per_1000_by_encounter_type(_conn):
-    member_count = get_member_count(_conn)
+def get_encounters_per_1000_by_encounter_type(_conn: str, year: str):
+    member_count = get_member_count(_conn, year)
     return _conn.query(f"""
         SELECT
-            encounter_group,
-            encounter_type,
+            ENCOUNTER_GROUP,
+            ENCOUNTER_TYPE,
             COUNT(DISTINCT ENCOUNTER_ID) * 12000.0 / {member_count} AS ENCOUNTERS_PER_1000
-        FROM outlier_claims_agg
-        GROUP BY encounter_group, encounter_type
-        ORDER BY encounter_type DESC
+        FROM OUTLIER_CLAIMS_AGG
+        WHERE INCR_YEAR={year}
+        GROUP BY ENCOUNTER_GROUP, ENCOUNTER_TYPE
+        ORDER BY ENCOUNTER_TYPE DESC
     """)
 
 
 @st.cache_data
-def get_paid_per_encounter_by_encounter_type(_conn):
-    encounter_count = get_encounter_count(_conn)
+def get_paid_per_encounter_by_encounter_type(_conn: str, year: str):
+    encounter_count = get_encounter_count(_conn, year)
     return _conn.query(f"""
         SELECT
-            encounter_group,
-            encounter_type,
+            ENCOUNTER_GROUP,
+            ENCOUNTER_TYPE,
             SUM(PAID_AMOUNT) / {encounter_count} AS PAID_PER_ENCOUNTER
-        FROM outlier_claims_agg
-        GROUP BY encounter_group, encounter_type
-        ORDER BY encounter_type DESC
+        FROM OUTLIER_CLAIMS_AGG
+        WHERE INCR_YEAR={year}
+        GROUP BY ENCOUNTER_GROUP, ENCOUNTER_TYPE
+        ORDER BY ENCOUNTER_TYPE DESC
     """)
