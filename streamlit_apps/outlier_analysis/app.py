@@ -6,6 +6,20 @@ st.set_page_config(page_icon="assets/tuva_icon.ico", layout="wide")
 # Display Logo
 st.logo("assets/tuva_logo.png", size="large")
 
+st.markdown(
+    """
+    <style>
+        .stMainBlockContainer  {
+            padding-left: 1rem;
+            padding-right: 1rem;
+            padding-top: 3rem;
+            padding-bottom: 2rem;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # Importing pages for navigation
 dashboard_page = st.Page("pages/outliers_cost_driver.py", title="Outlier Cost Driver")
 outliers_by_encounter_page = st.Page("pages/outliers_by_encounter.py", title="Outliers By Encounter")
