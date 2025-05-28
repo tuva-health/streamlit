@@ -1,5 +1,5 @@
 import streamlit as st
-from streamlit_apps.outlier_analysis.data import get_year_list
+from data import get_year_list
 
 st.set_page_config(page_icon="assets/tuva_icon.ico", layout="wide")
 

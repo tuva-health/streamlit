@@ -63,7 +63,6 @@ def display_metrics(metrics_data, year):
     with col5:
         st.markdown(
             f"""
-            **Data Source:** {year} Medicare LDS 5% Sample  
             **Inclusion Criteria:** All beneficiaries with annual claim costs > 2 std dev from mean (${mean_paid:.2f})
             """
         )
