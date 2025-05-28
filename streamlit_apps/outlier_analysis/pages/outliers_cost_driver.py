@@ -78,7 +78,7 @@ def display_metrics(metrics_data, year):
         """,
             unsafe_allow_html=True,
         )
-def plot_bar_chart(df, x, y, title, height=210):
+def plot_bar_chart(df, x, y, title, height=260):
         """Create a horizontal bar chart with Plotly."""
         fig = px.bar(
             df,
@@ -87,6 +87,7 @@ def plot_bar_chart(df, x, y, title, height=210):
             orientation="h",
             text=x,
             height=height,
+            color=y
         )
         fig.update_layout(
             showlegend=False,
@@ -99,7 +100,7 @@ def plot_bar_chart(df, x, y, title, height=210):
             title=title,
         )
         fig.update_traces(
-            marker_color="#66B1E2",
+            marker_color= None if y == "RACE" else '#66B1E2',
             textposition="outside",
             texttemplate="%{text}%" if x == "PERCENTAGE" else "%{text}",
             cliponaxis=False,
