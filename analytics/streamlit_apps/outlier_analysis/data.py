@@ -1,5 +1,14 @@
 import streamlit as st
 
+# App.py
+
+@st.cache_data
+def get_year_list(_conn: str):
+    return _conn.query("""
+        SELECT DISTINCT YEAR
+        FROM DEV_RAJAT.TEST.OUTLIER_MEMBER_MONTHS
+        ORDER BY YEAR DESC;
+    """)['YEAR'].tolist()
 
 # OUTLIER COST DRIVER
 

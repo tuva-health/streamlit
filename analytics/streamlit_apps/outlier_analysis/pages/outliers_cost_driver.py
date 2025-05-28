@@ -1,7 +1,6 @@
 import sys
 from pathlib import Path
 import streamlit as st
-import streamlit.components.v1 as components
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
@@ -71,12 +70,12 @@ def display_metrics(metrics_data, year):
 
         st.markdown(
         """
-        <style>
-        [data-testid="stMetricValue"] {
-            font-size: 14px;
-            font-weight: 700;
-        }
-        </style>
+            <style>
+            [data-testid="stMetricValue"] {
+                font-size: 14px;
+                font-weight: 700;
+            }
+            </style>
         """,
             unsafe_allow_html=True,
         )
@@ -147,7 +146,7 @@ def main():
         """,
         unsafe_allow_html=True
     )
-    year = 2016
+    year = st.session_state.get("page_selector") if "page_selector" in st.session_state else None
     conn = st.connection("snowflake")
     mean_paid = get_mean_paid(conn, year).iloc[0]
     metrics_data = get_metrics_data(conn, year)
