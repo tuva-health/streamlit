@@ -38,9 +38,6 @@ color_map = {etype: px.colors.qualitative.Plotly[i % 10]
 def get_colors_for_df(df):
     return [color_map[etype] for etype in df['ENCOUNTER_GROUP']]
 
-
-
-# Encounter Group Chart
 encounter_group_fig = make_subplots(
     rows=1, cols=3,
     shared_yaxes=True,
@@ -93,7 +90,6 @@ encounter_group_fig.add_trace(
     row=1, col=3
 )
 
-# Layout settings
 encounter_group_fig.update_layout(
     height=220,
     width=1200,
