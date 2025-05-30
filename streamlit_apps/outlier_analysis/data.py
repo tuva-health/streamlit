@@ -167,3 +167,56 @@ def get_paid_per_encounter_by_encounter_type(_conn: str, year: str):
         GROUP BY ENCOUNTER_GROUP, ENCOUNTER_TYPE
         ORDER BY ENCOUNTER_TYPE DESC
     """)
+
+@st.cache_data
+def get_pmpm_by_diagnosis_category(_conn: str, year: str):
+    member_count = get_member_count(_conn, year)
+    return _conn.query(f"""
+        WITH category_pmpm AS (
+            SELECT
+                DX_CCSR_CATEGORY2,
+                SUM(PAID_AMOUNT) / {member_count} AS PMPM
+            FROM OUTLIER_CLAIMS_AGG
+            GROUP BY DX_CCSR_CATEGORY2
+        ),
+        total_pmpm AS (
+            SELECT SUM(PMPM) AS total_pmpm
+            FROM category_pmpm
+        )
+
+        SELECT 
+            c.DX_CCSR_CATEGORY2,
+            c.PMPM,
+            ROUND((c.PMPM / t.total_pmpm) * 100, 1) AS PERCENT_OF_TOTAL_PMPM,
+            SUM(c.PMPM) OVER (ORDER BY c.PMPM DESC) AS CUMULATIVE_PMPM
+        FROM category_pmpm c
+        CROSS JOIN total_pmpm t
+        ORDER BY c.PMPM;
+    """)
+
+@st.cache_data
+def get_pmpm_by_diagnosis(_conn: str, year: str):
+    member_count = get_member_count(_conn, year)
+    return _conn.query(f"""
+        WITH category_pmpm AS (
+            SELECT
+                DX_DESCRIPTION,
+                SUM(PAID_AMOUNT) / {member_count} AS PMPM
+            FROM OUTLIER_CLAIMS_AGG
+            WHERE INCR_YEAR={year}
+            GROUP BY DX_DESCRIPTION
+        ),
+        total_pmpm AS (
+            SELECT SUM(PMPM) AS total_pmpm
+            FROM category_pmpm
+        )
+
+        SELECT 
+            c.DX_DESCRIPTION,
+            c.PMPM,
+            ROUND((c.PMPM / t.total_pmpm) * 100, 1) AS PERCENT_OF_TOTAL_PMPM,
+            SUM(c.PMPM) OVER (ORDER BY c.PMPM DESC) AS CUMULATIVE_PMPM
+        FROM category_pmpm c
+        CROSS JOIN total_pmpm t
+        ORDER BY c.PMPM;
+    """)

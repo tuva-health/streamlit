@@ -206,11 +206,6 @@ st.markdown("""
             margin-right: 8px;
             border: 1px solid #ccc;
         }
-
-        /* Add padding to bottom of block to prevent overlap */
-        .block-container {
-            padding-bottom: 70px;
-        }
     </style>
 """, unsafe_allow_html=True)
 
