@@ -1,4 +1,4 @@
-# Outlier Analuysis App
+# Outlier Analysis App
 
 This is a ready-to-run **Streamlit app template** for analyzing Outliers data using the Tuva data model and Snowflake. It demonstrates best practices for structuring multipage apps, using shared helper functions, and working with Snowflake credentials securely.
 
