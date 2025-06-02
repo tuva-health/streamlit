@@ -19,13 +19,20 @@ def get_metrics_data(_conn: str, year: str):
             COUNT(DISTINCT OM.MEMBER_ID) AS MEMBER_MONTHS
             , AVG(OM.AGE) AS MEAN_AGE
             , COUNT(DISTINCT CASE WHEN OM.SEX = 'female' THEN OM.MEMBER_ID END) AS FEMALE_COUNT
-            , SUM(AC.PAID_AMOUNT) AS TOTAL_PAID
-            , COUNT(DISTINCT AC.ENCOUNTER_ID) AS TOTAL_ENCOUNTERS
         FROM OUTLIER_MEMBER_MONTHS OM
-        LEFT JOIN ALL_CLAIMS_AGG AC
-            ON OM.MEMBER_ID = AC.MEMBER_ID
         WHERE OM.YEAR = {year};
     """)
+
+@st.cache_data
+def get_outlier_claims_data(_conn: str, year: str):
+    return _conn.query(f"""
+        SELECT 
+            SUM(PAID_AMOUNT) AS TOTAL_PAID
+            , COUNT(DISTINCT ENCOUNTER_ID) AS TOTAL_ENCOUNTERS
+        FROM OUTLIER_CLAIMS_AGG
+        WHERE INCR_YEAR = {year};
+    """)
+
 
 @st.cache_data
 def get_mean_paid(_conn: str, year: str):
