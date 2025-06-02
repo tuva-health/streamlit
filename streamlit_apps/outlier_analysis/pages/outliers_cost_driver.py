@@ -63,7 +63,7 @@ def display_metrics(conn, year):
         st.metric("Paid PMPM **($)**", rounded_paid_pmpm, border=True)
 
     with col4:
-        st.metric("Encounter / 1000", rounded_encounter_per_1000, border=True)
+        st.metric("Encounters / 1000", rounded_encounter_per_1000, border=True)
         st.metric("Paid / Encounter **($)**", paid_per_encounter, border=True)
 
     with col5:
@@ -153,7 +153,7 @@ def main():
     # --- Page Title and Description ---
     st.header("Outlier Cost Driver Dashboard", divider="grey")
     st.markdown(
-        f"This dashboard presents key metrics and visualizations for outlier cost drivers in the year {year}"
+        f"This dashboard presents key metrics and visualizations for outlier cost drivers in the year {year}."
     )
 
     display_metrics(conn, year)
