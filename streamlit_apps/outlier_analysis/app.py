@@ -3,6 +3,21 @@ from data import get_year_list
 
 st.set_page_config(page_icon="assets/tuva_icon.ico", layout="wide")
 
+st.markdown(
+    """
+    <style>
+        [data-testid="stLogo"] {
+                height: 1.5rem;
+                margin: 0px;
+                max-width: calc(260px - 4.75rem);
+                font-weight: 700;
+                object-fit: fill;
+            }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # Display Logo
 st.logo("assets/tuva_logo.png", size="large")
 
