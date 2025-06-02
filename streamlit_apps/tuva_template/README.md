@@ -1,8 +1,3 @@
-Absolutely! Here's a complete `README.md` for the `streamlit_apps/tuva_template/` folder, formatted in Markdown and ready to drop in:
-
----
-
-```markdown
 # Tuva Streamlit Template App
 
 This is a ready-to-run **Streamlit app template** for analyzing healthcare claims data using the Tuva data model and Snowflake. It demonstrates best practices for structuring multipage apps, using shared helper functions, and working with Snowflake credentials securely.
@@ -27,20 +22,25 @@ This is a ready-to-run **Streamlit app template** for analyzing healthcare claim
    cd streamlit_apps/tuva_template
    ```
 
-2. **(Optional but recommended) Activate your virtual environment**:
+2. **Activate your virtual environment**:
 
+   #### 💻 macOS/Linux
    ```bash
-   source ../../.venv/bin/activate      # Mac/Linux
-   .\\..\\.venv\\Scripts\\activate      # Windows
-   ```
-
-3. **Install dependencies**:
-
-   ```bash
+   python3 -m venv .venv
+   source ../../.venv/bin/activate
+   pip install --upgrade pip
    pip install -r requirements.txt
    ```
 
-4. **Set up Snowflake credentials** by creating a file:
+   #### 🪟 Windows
+   ```bash
+   python -m venv .venv
+   ..\.venv\Scripts\activate
+   pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
+
+3. **Set up Snowflake credentials** by creating a file:
 
    ```
    .streamlit/secrets.toml
@@ -58,13 +58,13 @@ This is a ready-to-run **Streamlit app template** for analyzing healthcare claim
    authenticator = "externalbrowser"
    ```
 
-5. **Run the app**:
+4. **Run the app**:
 
    ```bash
    streamlit run app.py
    ```
 
-6. The app will open in your browser at [http://localhost:8501](http://localhost:8501)
+5. The app will open in your browser at [http://localhost:8501](http://localhost:8501)
 
 ---
 

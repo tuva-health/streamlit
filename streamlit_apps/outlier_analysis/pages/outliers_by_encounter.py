@@ -20,14 +20,15 @@ from shared import path_utils
 path_utils.add_repo_to_path(levels_up=3)
 
 conn = st.connection("snowflake")
+year = st.session_state.get("page_selector") if "page_selector" in st.session_state else None
 
-pmpm_group = get_pmpm_by_encounter_group(conn).fillna('null')
-per_1000_group = get_encounters_per_1000_by_encounter_group(conn).fillna('null')
-paid_per_group = get_paid_per_encounter_by_encounter_group(conn).fillna('null')
+pmpm_group = get_pmpm_by_encounter_group(conn, year).fillna('null')
+per_1000_group = get_encounters_per_1000_by_encounter_group(conn, year).fillna('null')
+paid_per_group = get_paid_per_encounter_by_encounter_group(conn, year).fillna('null')
 
-pmpm_type = get_pmpm_by_encounter_type(conn).fillna('null')
-per_1000_type = get_encounters_per_1000_by_encounter_type(conn).fillna('null')
-paid_per_type = get_paid_per_encounter_by_encounter_type(conn).fillna('null')
+pmpm_type = get_pmpm_by_encounter_type(conn, year).fillna('null')
+per_1000_type = get_encounters_per_1000_by_encounter_type(conn, year).fillna('null')
+paid_per_type = get_paid_per_encounter_by_encounter_type(conn, year).fillna('null')
 
 encounter_groups = pmpm_group["ENCOUNTER_GROUP"].unique()
 
@@ -37,24 +38,13 @@ color_map = {etype: px.colors.qualitative.Plotly[i % 10]
 def get_colors_for_df(df):
     return [color_map[etype] for etype in df['ENCOUNTER_GROUP']]
 
-st.markdown(
-    """
-    <style>
-        .stMainBlockContainer  {
-            padding-left: 1rem;
-            padding-right: 1rem;
-            padding-top: 2rem;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+
 
 # Encounter Group Chart
 encounter_group_fig = make_subplots(
     rows=1, cols=3,
     shared_yaxes=True,
-    horizontal_spacing=0.05,
+    horizontal_spacing=0.1,
     subplot_titles=("Paid PMPM", "Encounters per 1000", "Paid Per Encounter")
 )
 
@@ -65,6 +55,8 @@ encounter_group_fig.add_trace(
         y=pmpm_group["ENCOUNTER_GROUP"],
         marker_color=get_colors_for_df(pmpm_group),
         text=[f"${x:.2f}" for x in pmpm_group["PMPM"]],
+        textposition='outside',
+        cliponaxis=False,
         orientation='h',
         showlegend=False,
     ),
@@ -78,6 +70,8 @@ encounter_group_fig.add_trace(
         y=per_1000_group["ENCOUNTER_GROUP"],
         marker_color=get_colors_for_df(per_1000_group),
         text=[f"{x:.2f}" for x in per_1000_group["ENCOUNTERS_PER_1000"]],
+        textposition='outside',
+        cliponaxis=False,
         orientation='h',
         showlegend=False
     ),
@@ -91,6 +85,8 @@ encounter_group_fig.add_trace(
         y=paid_per_group["ENCOUNTER_GROUP"],
         marker_color=get_colors_for_df(paid_per_group),
         text=[f"${x:.2f}" for x in paid_per_group["PAID_PER_ENCOUNTER"]],
+        textposition='outside',
+        cliponaxis=False,
         orientation='h',
         showlegend=False
     ),
@@ -101,7 +97,7 @@ encounter_group_fig.add_trace(
 encounter_group_fig.update_layout(
     height=220,
     width=1200,
-    margin=dict(l=150, b=10),
+    margin=dict(l=150, b=10, r=65),
     title=dict(
         text="Encounter Group",
         x=0.5,
@@ -115,7 +111,7 @@ st.plotly_chart(encounter_group_fig, use_container_width=True)
 encounter_type_fig = make_subplots(
     rows=1, cols=3,
     shared_yaxes=True,
-    horizontal_spacing=0.05,
+    horizontal_spacing=0.1,
     subplot_titles=("Paid PMPM", "Encounters per 1000", "Paid Per Encounter")
 )
 
@@ -126,6 +122,8 @@ encounter_type_fig.add_trace(
         y=pmpm_type["ENCOUNTER_TYPE"],
         marker_color=get_colors_for_df(pmpm_type),
         text=[f"${x:.2f}" for x in pmpm_type["PMPM"]],
+        textposition='outside',
+        cliponaxis=False,
         orientation='h',
         showlegend=False
     ),
@@ -139,6 +137,8 @@ encounter_type_fig.add_trace(
         y=per_1000_type["ENCOUNTER_TYPE"],
         marker_color=get_colors_for_df(per_1000_type),
         text=[f"{x:.2f}" for x in per_1000_type["ENCOUNTERS_PER_1000"]],
+        textposition='outside',
+        cliponaxis=False,
         orientation='h',
         showlegend=False
     ),
@@ -152,14 +152,16 @@ encounter_type_fig.add_trace(
         y=paid_per_type["ENCOUNTER_TYPE"],
         marker_color=get_colors_for_df(paid_per_type),
         text=[f"${x:.2f}" for x in paid_per_type["PAID_PER_ENCOUNTER"]],
+        textposition='outside',
+        cliponaxis=False,
         orientation='h',
-        showlegend=False
+        showlegend=False,
     ),
     row=1, col=3
 )
 
 encounter_type_fig.update_layout(
-    height=350,
+    height=500,
     width=1200,
     title=dict(
         text="Encounter Type",
@@ -167,19 +169,63 @@ encounter_type_fig.update_layout(
         xanchor='center',
         font=dict(size=20)
     ),
-    margin=dict(b=2),
+    margin=dict(b=2, r=65),
 )
 
 st.plotly_chart(encounter_type_fig, use_container_width=True)
 
-legend_cols = st.columns(len(color_map))
+st.markdown("""
+    <style>
+        #fixed-legend-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            background-color: white;
+            border-top: 1px solid #ddd;
+            padding: 10px 20px;
+            z-index: 10;
+        }
 
-for i, (encounter_group, color) in enumerate(color_map.items()):
-    with legend_cols[i]:
-        st.markdown(
-            f"<div style='display: flex; align-items: center; '>"
-            f"<div style='width: 20px; height: 20px; background-color: {color}; margin-right: 8px; border: 1px solid #ccc;'></div>"
-            f"<span>{encounter_group}</span>"
-            f"</div>",
-            unsafe_allow_html=True
-        )
+        .legend-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            border: 1px solid #ccc;
+        }
+
+        /* Add padding to bottom of block to prevent overlap */
+        .block-container {
+            padding-bottom: 70px;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+
+# Legend HTML block
+legend_html = "<div id='fixed-legend-container'><div class='legend-row'>"
+
+for encounter_group, color in color_map.items():
+    legend_html += (
+        f"<div class='legend-item'>"
+        f"<div class='legend-color' style='background-color: {color};'></div>"
+        f"<span>{encounter_group}</span>"
+        f"</div>"
+    )
+
+legend_html += "</div></div>"
+
+st.markdown(legend_html, unsafe_allow_html=True)
