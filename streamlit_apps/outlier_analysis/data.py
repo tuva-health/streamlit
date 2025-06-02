@@ -83,7 +83,7 @@ def get_member_count(_conn: str, year: str):
 
 @st.cache_data
 def get_encounter_count(_conn: str, year: str):
-    return _conn.query(f"SELECT COUNT(DISTINCT ENCOUNTER_ID) as total FROM OUTLIER_CLAIMS_AGG WHERE INCR_YEAR={year} ").iloc[0]['TOTAL']
+    return _conn.query(f"SELECT COUNT(DISTINCT ENCOUNTER_ID) as total FROM OUTLIER_CLAIMS_AGG WHERE INCR_YEAR={year}").iloc[0]['TOTAL']
 
 
 @st.cache_data
@@ -95,7 +95,17 @@ def get_pmpm_by_encounter_group(_conn: str, year: str):
             SUM(PAID_AMOUNT) / {member_count} AS PMPM
         FROM OUTLIER_CLAIMS_AGG
         WHERE INCR_YEAR={year}
-        GROUP BY ENCOUNTER_GROUP ORDER BY ENCOUNTER_GROUP DESC
+        GROUP BY ENCOUNTER_GROUP
+
+        UNION ALL
+
+        SELECT
+            'Grand Total' AS ENCOUNTER_GROUP,
+            SUM(PAID_AMOUNT) / {member_count} AS PMPM
+        FROM OUTLIER_CLAIMS_AGG
+        WHERE INCR_YEAR={year}
+
+        ORDER BY PMPM
     """)
 
 
@@ -108,7 +118,15 @@ def get_encounters_per_1000_by_encounter_group(_conn: str, year: str):
             (COUNT(DISTINCT ENCOUNTER_ID) * 12000.0) / {member_count} AS ENCOUNTERS_PER_1000
         FROM OUTLIER_CLAIMS_AGG
         WHERE INCR_YEAR={year}
-        GROUP BY ENCOUNTER_GROUP ORDER BY ENCOUNTER_GROUP DESC
+        GROUP BY ENCOUNTER_GROUP
+
+        UNION ALL
+
+        SELECT
+            'Grand Total' AS ENCOUNTER_GROUP,
+            (COUNT(DISTINCT ENCOUNTER_ID) * 12000.0) / {member_count} AS ENCOUNTERS_PER_1000
+        FROM OUTLIER_CLAIMS_AGG
+        WHERE INCR_YEAR={year}
     """)
 
 
@@ -118,10 +136,21 @@ def get_paid_per_encounter_by_encounter_group(_conn: str, year: str):
     return _conn.query(f"""
         SELECT
             ENCOUNTER_GROUP,
-            SUM(PAID_AMOUNT) / {encounter_count} AS PAID_PER_ENCOUNTER
+            CASE 
+                WHEN COUNT(DISTINCT ENCOUNTER_ID) = 0 THEN 0 
+                ELSE SUM(PAID_AMOUNT) / COUNT(DISTINCT ENCOUNTER_ID)
+            END AS PAID_PER_ENCOUNTER
         FROM OUTLIER_CLAIMS_AGG
         WHERE INCR_YEAR={year}
-        GROUP BY ENCOUNTER_GROUP ORDER BY ENCOUNTER_GROUP DESC
+        GROUP BY ENCOUNTER_GROUP
+
+        UNION ALL
+
+        SELECT
+            'Grand Total' AS ENCOUNTER_GROUP,
+            CASE WHEN {encounter_count} = 0 THEN 0 ELSE SUM(PAID_AMOUNT) / {encounter_count} END
+        FROM OUTLIER_CLAIMS_AGG
+        WHERE INCR_YEAR={year}
     """)
 
 @st.cache_data
@@ -135,7 +164,16 @@ def get_pmpm_by_encounter_type(_conn: str, year: str):
         FROM OUTLIER_CLAIMS_AGG
         WHERE INCR_YEAR={year}
         GROUP BY ENCOUNTER_GROUP, ENCOUNTER_TYPE
-        ORDER BY ENCOUNTER_TYPE DESC
+
+        UNION ALL
+
+        SELECT
+            'Grand Total' AS ENCOUNTER_GROUP,
+            'Grand Total' AS ENCOUNTER_TYPE,
+            SUM(PAID_AMOUNT) / {member_count} AS PMPM
+        FROM OUTLIER_CLAIMS_AGG
+        WHERE INCR_YEAR={year}
+        ORDER BY PMPM
     """)
 
 
@@ -150,7 +188,15 @@ def get_encounters_per_1000_by_encounter_type(_conn: str, year: str):
         FROM OUTLIER_CLAIMS_AGG
         WHERE INCR_YEAR={year}
         GROUP BY ENCOUNTER_GROUP, ENCOUNTER_TYPE
-        ORDER BY ENCOUNTER_TYPE DESC
+        
+        UNION ALL
+
+        SELECT
+            'Grand Total' AS ENCOUNTER_GROUP,
+            'Grand Total' AS ENCOUNTER_TYPE,
+            COUNT(DISTINCT ENCOUNTER_ID) * 12000.0 / {member_count} AS ENCOUNTERS_PER_1000
+        FROM OUTLIER_CLAIMS_AGG
+        WHERE INCR_YEAR={year}
     """)
 
 
@@ -161,11 +207,22 @@ def get_paid_per_encounter_by_encounter_type(_conn: str, year: str):
         SELECT
             ENCOUNTER_GROUP,
             ENCOUNTER_TYPE,
-            SUM(PAID_AMOUNT) / {encounter_count} AS PAID_PER_ENCOUNTER
+            CASE 
+                WHEN COUNT(DISTINCT ENCOUNTER_ID) = 0 THEN 0 
+                ELSE SUM(PAID_AMOUNT) / COUNT(DISTINCT ENCOUNTER_ID)
+            END AS PAID_PER_ENCOUNTER
         FROM OUTLIER_CLAIMS_AGG
         WHERE INCR_YEAR={year}
         GROUP BY ENCOUNTER_GROUP, ENCOUNTER_TYPE
-        ORDER BY ENCOUNTER_TYPE DESC
+
+        UNION ALL
+
+        SELECT
+            'Grand Total' AS ENCOUNTER_GROUP,
+            'Grand Total' AS ENCOUNTER_TYPE,
+            CASE WHEN {encounter_count} = 0 THEN 0 ELSE SUM(PAID_AMOUNT) / {encounter_count} END
+        FROM OUTLIER_CLAIMS_AGG
+        WHERE INCR_YEAR={year}
     """)
 
 @st.cache_data

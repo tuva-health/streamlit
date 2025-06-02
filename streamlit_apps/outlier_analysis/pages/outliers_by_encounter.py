@@ -1,7 +1,6 @@
 import sys
 from pathlib import Path
 import streamlit as st
-import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from data import (
@@ -32,8 +31,14 @@ paid_per_type = get_paid_per_encounter_by_encounter_type(conn, year).fillna('nul
 
 encounter_groups = pmpm_group["ENCOUNTER_GROUP"].unique()
 
-color_map = {etype: px.colors.qualitative.Plotly[i % 10]
-                      for i, etype in enumerate(encounter_groups)}
+color_map = {
+    "null": "#D3D3D3",
+    "inpatient": "#0A3F5C",
+    "office based": "#FDCB0A",
+    "other": "#0FB594",
+    "outpatient": "#64B0E1",
+    "Grand Total": "#5C6068"
+}
 
 def get_colors_for_df(df):
     return [color_map[etype] for etype in df['ENCOUNTER_GROUP']]
@@ -51,11 +56,16 @@ encounter_group_fig.add_trace(
         x=pmpm_group["PMPM"],
         y=pmpm_group["ENCOUNTER_GROUP"],
         marker_color=get_colors_for_df(pmpm_group),
-        text=[f"${x:.2f}" for x in pmpm_group["PMPM"]],
+        text=[f"${int(round(x)):,}" for x in pmpm_group["PMPM"]],
         textposition='outside',
         cliponaxis=False,
         orientation='h',
         showlegend=False,
+        hovertemplate=(
+            "<b>Encounter Group:</b> %{customdata[0]}<br>" +
+            "<b>Paid PMPM:</b> $%{x:,.0f}<extra></extra>"
+        ),
+        customdata=pmpm_group[["ENCOUNTER_GROUP"]].values
     ),
     row=1, col=1
 )
@@ -66,11 +76,16 @@ encounter_group_fig.add_trace(
         x=per_1000_group["ENCOUNTERS_PER_1000"],
         y=per_1000_group["ENCOUNTER_GROUP"],
         marker_color=get_colors_for_df(per_1000_group),
-        text=[f"{x:.2f}" for x in per_1000_group["ENCOUNTERS_PER_1000"]],
+        text=[f"{int(round(x)):,}" for x in per_1000_group["ENCOUNTERS_PER_1000"]],
         textposition='outside',
         cliponaxis=False,
         orientation='h',
-        showlegend=False
+        showlegend=False,
+        hovertemplate=(
+            "<b>Encounter Group:</b> %{customdata[0]}<br>" +
+            "<b>Encounters Per 1000:</b> %{x:,.0f}<extra></extra>"
+        ),
+        customdata=per_1000_group[["ENCOUNTER_GROUP"]].values
     ),
     row=1, col=2
 )
@@ -81,11 +96,16 @@ encounter_group_fig.add_trace(
         x=paid_per_group["PAID_PER_ENCOUNTER"],
         y=paid_per_group["ENCOUNTER_GROUP"],
         marker_color=get_colors_for_df(paid_per_group),
-        text=[f"${x:.2f}" for x in paid_per_group["PAID_PER_ENCOUNTER"]],
+        text=[f"${int(round(x)):,}" for x in paid_per_group["PAID_PER_ENCOUNTER"]],
         textposition='outside',
         cliponaxis=False,
         orientation='h',
-        showlegend=False
+        showlegend=False,
+        hovertemplate=(
+            "<b>Encounter Group:</b> %{customdata[0]}<br>" +
+            "<b>Paid Per Encounter:</b> $%{x:,.0f}<extra></extra>"
+        ),
+        customdata=paid_per_group[["ENCOUNTER_GROUP"]].values
     ),
     row=1, col=3
 )
@@ -117,11 +137,17 @@ encounter_type_fig.add_trace(
         x=pmpm_type["PMPM"],
         y=pmpm_type["ENCOUNTER_TYPE"],
         marker_color=get_colors_for_df(pmpm_type),
-        text=[f"${x:.2f}" for x in pmpm_type["PMPM"]],
+        text=[f"${int(round(x)):,}" for x in pmpm_type["PMPM"]],
         textposition='outside',
         cliponaxis=False,
         orientation='h',
-        showlegend=False
+        showlegend=False,
+        hovertemplate=(
+            "<b>Encounter Group:</b> %{customdata[0]}<br>" +
+            "<b>Encounter Type:</b> %{y}<br>" +
+            "<b>Paid PMPM:</b> $%{x:,.0f}<extra></extra>"
+        ),
+        customdata=pmpm_type[["ENCOUNTER_GROUP"]].values
     ),
     row=1, col=1
 )
@@ -132,11 +158,17 @@ encounter_type_fig.add_trace(
         x=per_1000_type["ENCOUNTERS_PER_1000"],
         y=per_1000_type["ENCOUNTER_TYPE"],
         marker_color=get_colors_for_df(per_1000_type),
-        text=[f"{x:.2f}" for x in per_1000_type["ENCOUNTERS_PER_1000"]],
+        text=[f"{int(round(x)):,}" for x in per_1000_type["ENCOUNTERS_PER_1000"]],
         textposition='outside',
         cliponaxis=False,
         orientation='h',
-        showlegend=False
+        showlegend=False,
+        hovertemplate=(
+            "<b>Encounter Group:</b> %{customdata[0]}<br>" +
+            "<b>Encounter Type:</b> %{y}<br>" +
+            "<b>Encounters Per 1000:</b> %{x:,.0f}<extra></extra>"
+        ),
+        customdata=per_1000_type[["ENCOUNTER_GROUP"]].values
     ),
     row=1, col=2
 )
@@ -147,11 +179,17 @@ encounter_type_fig.add_trace(
         x=paid_per_type["PAID_PER_ENCOUNTER"],
         y=paid_per_type["ENCOUNTER_TYPE"],
         marker_color=get_colors_for_df(paid_per_type),
-        text=[f"${x:.2f}" for x in paid_per_type["PAID_PER_ENCOUNTER"]],
+         text=[f"${int(round(x)):,}" for x in paid_per_type["PAID_PER_ENCOUNTER"]],
         textposition='outside',
         cliponaxis=False,
         orientation='h',
         showlegend=False,
+        hovertemplate=(
+            "<b>Encounter Group:</b> %{customdata[0]}<br>" +
+            "<b>Encounter Type:</b> %{y}<br>" +
+            "<b>Paid Per Encounter:</b> $%{x:,.0f}<extra></extra>"
+        ),
+        customdata=paid_per_type[["ENCOUNTER_GROUP"]].values
     ),
     row=1, col=3
 )

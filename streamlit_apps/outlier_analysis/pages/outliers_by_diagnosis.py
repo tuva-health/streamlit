@@ -58,13 +58,13 @@ diagnosis_category_fig.add_trace(
     go.Bar(
         x=pmpm_diagnosis_category["PERCENT_OF_TOTAL_PMPM"],
         y=pmpm_diagnosis_category["DX_CCSR_CATEGORY2"],
-        text=[f"{x:.2f} %" for x in pmpm_diagnosis_category["PERCENT_OF_TOTAL_PMPM"]],
+        text=[f"{x:.1f} %" for x in pmpm_diagnosis_category["PERCENT_OF_TOTAL_PMPM"]],
         textposition='outside',
         cliponaxis=False,
         orientation='h',
         showlegend=False,
         customdata=pmpm_diagnosis_category["DX_CCSR_CATEGORY2"],
-        hovertemplate="<b>%{customdata}</b><br>PMPM: %{x:.2f}%<extra></extra>",
+        hovertemplate="<b>%{customdata}</b><br>PMPM: %{x:.1f}%<extra></extra>",
     ),
     row=1, col=1
 )
@@ -74,13 +74,13 @@ diagnosis_category_fig.add_trace(
     go.Bar(
         x=pmpm_diagnosis_category["CUMULATIVE_PMPM"],
         y=pmpm_diagnosis_category["DX_CCSR_CATEGORY2"],
-        text=[f"{x:.2f}" for x in pmpm_diagnosis_category["CUMULATIVE_PMPM"]],
+        text=[f"${int(round(x)):,}" for x in pmpm_diagnosis_category["CUMULATIVE_PMPM"]],
         textposition='outside',
         cliponaxis=False,
         orientation='h',
         showlegend=False,
         customdata=pmpm_diagnosis_category["DX_CCSR_CATEGORY2"],
-        hovertemplate="<b>%{customdata}</b><extra></extra>",
+        hovertemplate="<b>%{customdata}</b><br>Cumulative PMPM: $%{x:,.0f}<extra></extra>",
     ),
     row=1, col=2
 )
@@ -103,15 +103,16 @@ diagnosis_category_fig.update_layout(
         tickvals=full_category_labels,
         ticktext=truncated_category_labels,
         tickfont=dict(size=11)
-    )
+    ),
+    hovermode='y',
 )
 
-st.markdown("<h4 style='text-align: center;'>Diagnosis Category</h3>", unsafe_allow_html=True)
+st.markdown("<h5 style='text-align: center; font-weight: bold; padding-bottom: 0;'>Diagnosis Category</h3>", unsafe_allow_html=True)
 st.plotly_chart(diagnosis_category_fig, use_container_width=True, key="diagnosis-category-chart")
 
 diagnosis_fig = make_subplots(
     rows=1, cols=2,
-    column_widths=[0.3, 0.7],
+    column_widths=[0.5, 0.5],
     shared_yaxes=True,
     horizontal_spacing=0.05,
     subplot_titles=("% of Paid PMPM", "Cumulative Paid PMPM")
@@ -122,13 +123,13 @@ diagnosis_fig.add_trace(
     go.Bar(
         x=pmpm_diagnosis["PERCENT_OF_TOTAL_PMPM"],
         y=pmpm_diagnosis["DX_DESCRIPTION"],
-        text=[f"{x:.2f}" for x in pmpm_diagnosis["PERCENT_OF_TOTAL_PMPM"]],
+        text=[f"{x:.1f}" for x in pmpm_diagnosis["PERCENT_OF_TOTAL_PMPM"]],
         textposition='outside',
         cliponaxis=False,
         orientation='h',
         showlegend=False,
         customdata=pmpm_diagnosis["DX_DESCRIPTION"],
-        hovertemplate="<b>%{customdata}</b><br>PMPM: %{x:.2f}%<extra></extra>",
+        hovertemplate="<b>%{customdata}</b><br>PMPM: %{x:.1f}%<extra></extra>",
     ),
     row=1, col=1
 )
@@ -138,13 +139,13 @@ diagnosis_fig.add_trace(
     go.Bar(
         x=pmpm_diagnosis["CUMULATIVE_PMPM"],
         y=pmpm_diagnosis["DX_DESCRIPTION"],
-        text=[f"{x:.2f}" for x in pmpm_diagnosis["CUMULATIVE_PMPM"]],
+        text=[f"${int(round(x)):,}" for x in pmpm_diagnosis["CUMULATIVE_PMPM"]],
         textposition='outside',
         cliponaxis=False,
         orientation='h',
         showlegend=False,
         customdata=pmpm_diagnosis["DX_DESCRIPTION"],
-        hovertemplate="<b>%{customdata}</b><extra></extra>",
+        hovertemplate="<b>%{customdata}</b><br>Cumulative PMPM: $%{x:,.0f}<extra></extra>",
     ),
     row=1, col=2
 )
@@ -167,8 +168,9 @@ diagnosis_fig.update_layout(
         tickvals=full_labels,
         ticktext=truncated_labels,
         tickfont=dict(size=11)
-    )
+    ),
+    hovermode='y',
 )
 
-st.markdown("<h4 style='text-align: center;'>Diagnosis</h3>", unsafe_allow_html=True)
+st.markdown("<h5 style='text-align: center; font-weight: bold; padding-bottom: 0;'>Diagnosis</h3>", unsafe_allow_html=True)
 st.plotly_chart(diagnosis_fig, use_container_width=True, key="diagnosis-chart")
