@@ -1,3 +1,4 @@
+from decimal import ROUND_HALF_UP, Decimal
 import sys
 from pathlib import Path
 import streamlit as st
@@ -32,7 +33,7 @@ def display_metrics(metrics_data, year):
     # Extract and sanitize values
     total_population = safe_extract(metrics_data.get("MEMBER_MONTHS"), default=0, as_type=int)
     female_count = safe_extract(metrics_data.get("FEMALE_COUNT"), default=0, as_type=float)
-    mean_age = safe_extract(metrics_data.get("MEAN_AGE"), default="N/A", as_type=float)
+    mean_age = safe_extract(metrics_data.get("MEAN_AGE"), default="N/A", as_type=Decimal)
     total_paid = safe_extract(metrics_data.get("TOTAL_PAID"), default=0.0, as_type=float)
     total_encounters = safe_extract(metrics_data.get("TOTAL_ENCOUNTERS"), default=0, as_type=int)
     mean_paid = safe_extract(metrics_data.get("MEAN_PAID"), default=0.0, as_type=float)
@@ -42,11 +43,12 @@ def display_metrics(metrics_data, year):
     encounter_per_1000 = (total_encounters / total_population) * 12000 if total_population else 0.0
     paid_per_encounter = (total_paid / total_encounters) if total_encounters else 0.0
     paid_pmpm = (total_paid / total_population) if total_population else 0.0
+    rounded_mean_age = int((mean_age).to_integral_value(rounding=ROUND_HALF_UP))
 
     col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 2, 4], gap="small")
     with col1:
         st.metric(label="Members", value=total_population, border=True)
-        st.metric("Mean Age **(Yrs)**", f"{mean_age:,.2f}", border=True)
+        st.metric("Mean Age **(Yrs)**", rounded_mean_age, border=True)
 
     with col2:
         st.metric("Percent Female **(%)**", f"{percent_female:.2f}", border=True)
@@ -87,7 +89,6 @@ def plot_bar_chart(df, x, y, title, height=260):
             orientation="h",
             text=x,
             height=height,
-            color=y
         )
         fig.update_layout(
             showlegend=False,
@@ -100,7 +101,7 @@ def plot_bar_chart(df, x, y, title, height=260):
             title=title,
         )
         fig.update_traces(
-            marker_color= None if y == "RACE" else '#66B1E2',
+            marker_color= "#64B0E1",
             textposition="outside",
             texttemplate="%{text}%" if x == "PERCENTAGE" else "%{text}",
             cliponaxis=False,
