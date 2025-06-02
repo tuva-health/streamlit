@@ -9,6 +9,7 @@ sys.path.append(str(Path(__file__).resolve().parents[3]))
 from data import (
     get_metrics_data,
     get_mean_paid,
+    get_avg_hcc_risk_score,
     get_outlier_claims_data,
     get_outlier_population_by_race,
     get_outlier_population_by_state,
@@ -24,6 +25,7 @@ def display_metrics(conn, year):
     """Display summary metrics in columns."""
    
     mean_paid = get_mean_paid(conn, year).iloc[0]
+    avg_hcc_risk_score = get_avg_hcc_risk_score(conn, year).iloc[0]
     metrics_data = get_metrics_data(conn, year)
     claims_data = get_outlier_claims_data(conn, year)
     metrics_data["MEAN_PAID"] = mean_paid
@@ -54,7 +56,7 @@ def display_metrics(conn, year):
 
     with col2:
         st.metric("Percent Female **(%)**", f"{percent_female:.2f}", border=True)
-        st.metric("Avg HCC Risk Score", "4.14", border=True)  # Replace with actual value if available
+        st.metric("Avg HCC Risk Score", f"{avg_hcc_risk_score:.2f}", border=True)  # Replace with actual value if available
 
     with col3:
         st.metric("Paid Amount **($)**", format_large_number(total_paid), border=True)

@@ -45,6 +45,15 @@ def get_mean_paid(_conn: str, year: str):
     """).iloc[0]
 
 @st.cache_data
+def get_avg_hcc_risk_score(_conn: str, year: str):
+    return _conn.query(f"""
+        SELECT 
+            AVG(V24_RISK_SCORE) AS AVG_RISK_SCORE
+        FROM OUTLIER_MEMBER_MONTHS
+        WHERE YEAR = {year} AND V24_RISK_SCORE IS NOT NULL;;
+    """).iloc[0]
+
+@st.cache_data
 def get_outlier_population_by_race(_conn: str, year: str):
     return _conn.query(f"""
         SELECT 
@@ -54,7 +63,8 @@ def get_outlier_population_by_race(_conn: str, year: str):
                 COUNT(DISTINCT MEMBER_ID) * 100.0 / 
                 SUM(COUNT(DISTINCT MEMBER_ID)) OVER (), 2
             ) AS PERCENTAGE 
-        FROM OUTLIER_MEMBER_MONTHS WHERE YEAR = {year} AND RACE IS NOT NULL GROUP BY RACE;
+        FROM OUTLIER_MEMBER_MONTHS WHERE YEAR = {year} AND RACE IS NOT NULL GROUP BY RACE
+        ORDER BY PERCENTAGE;
     """)
 
 @st.cache_data
@@ -67,7 +77,8 @@ def get_outlier_population_by_state(_conn: str, year: str):
                 COUNT(DISTINCT MEMBER_ID) * 100.0 / 
                 SUM(COUNT(DISTINCT MEMBER_ID)) OVER (), 2
             ) AS PERCENTAGE 
-        FROM OUTLIER_MEMBER_MONTHS WHERE YEAR = {year} AND STATE IS NOT NULL GROUP BY STATE;
+        FROM OUTLIER_MEMBER_MONTHS WHERE YEAR = {year} AND STATE IS NOT NULL GROUP BY STATE
+        ORDER BY PERCENTAGE;
     """)
 
 @st.cache_data
