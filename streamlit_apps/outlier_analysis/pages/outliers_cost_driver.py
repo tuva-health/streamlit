@@ -52,19 +52,19 @@ def display_metrics(conn, year):
     col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 2, 4], gap="small")
     with col1:
         st.metric("Members", total_population, border=True)
-        st.metric("Mean Age **(Yrs)**", rounded_mean_age, border=True)
+        st.metric("Mean Age ", rounded_mean_age, border=True)
 
     with col2:
-        st.metric("Percent Female **(%)**", f"{percent_female:.2f}", border=True)
+        st.metric("Percent Female", f"{percent_female:.2f}%", border=True)
         st.metric("Avg HCC Risk Score", f"{avg_hcc_risk_score:.2f}", border=True)  # Replace with actual value if available
 
     with col3:
-        st.metric("Paid Amount **($)**", format_large_number(total_paid), border=True)
-        st.metric("Paid PMPM **($)**", rounded_paid_pmpm, border=True)
+        st.metric("Paid Amount", format_large_number(total_paid), border=True)
+        st.metric("Paid PMPM", rounded_paid_pmpm, border=True)
 
     with col4:
         st.metric("Encounters / 1000", rounded_encounter_per_1000, border=True)
-        st.metric("Paid / Encounter **($)**", paid_per_encounter, border=True)
+        st.metric("Paid / Encounter", paid_per_encounter, border=True)
 
     with col5:
         st.markdown(
