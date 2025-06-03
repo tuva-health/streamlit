@@ -19,13 +19,20 @@ def get_metrics_data(_conn: str, year: str):
             COUNT(DISTINCT OM.MEMBER_ID) AS MEMBER_MONTHS
             , AVG(OM.AGE) AS MEAN_AGE
             , COUNT(DISTINCT CASE WHEN OM.SEX = 'female' THEN OM.MEMBER_ID END) AS FEMALE_COUNT
-            , SUM(AC.PAID_AMOUNT) AS TOTAL_PAID
-            , COUNT(DISTINCT AC.ENCOUNTER_ID) AS TOTAL_ENCOUNTERS
         FROM OUTLIER_MEMBER_MONTHS OM
-        LEFT JOIN ALL_CLAIMS_AGG AC
-            ON OM.MEMBER_ID = AC.MEMBER_ID
         WHERE OM.YEAR = {year};
     """)
+
+@st.cache_data
+def get_outlier_claims_data(_conn: str, year: str):
+    return _conn.query(f"""
+        SELECT 
+            SUM(PAID_AMOUNT) AS TOTAL_PAID
+            , COUNT(DISTINCT ENCOUNTER_ID) AS TOTAL_ENCOUNTERS
+        FROM OUTLIER_CLAIMS_AGG
+        WHERE INCR_YEAR = {year};
+    """)
+
 
 @st.cache_data
 def get_mean_paid(_conn: str, year: str):
@@ -38,6 +45,15 @@ def get_mean_paid(_conn: str, year: str):
     """).iloc[0]
 
 @st.cache_data
+def get_avg_hcc_risk_score(_conn: str, year: str):
+    return _conn.query(f"""
+        SELECT 
+            AVG(V24_RISK_SCORE) AS AVG_RISK_SCORE
+        FROM OUTLIER_MEMBER_MONTHS
+        WHERE YEAR = {year} AND V24_RISK_SCORE IS NOT NULL;;
+    """).iloc[0]
+
+@st.cache_data
 def get_outlier_population_by_race(_conn: str, year: str):
     return _conn.query(f"""
         SELECT 
@@ -47,7 +63,8 @@ def get_outlier_population_by_race(_conn: str, year: str):
                 COUNT(DISTINCT MEMBER_ID) * 100.0 / 
                 SUM(COUNT(DISTINCT MEMBER_ID)) OVER (), 2
             ) AS PERCENTAGE 
-        FROM OUTLIER_MEMBER_MONTHS WHERE YEAR = {year} AND RACE IS NOT NULL GROUP BY RACE;
+        FROM OUTLIER_MEMBER_MONTHS WHERE YEAR = {year} AND RACE IS NOT NULL GROUP BY RACE
+        ORDER BY PERCENTAGE;
     """)
 
 @st.cache_data
@@ -60,7 +77,8 @@ def get_outlier_population_by_state(_conn: str, year: str):
                 COUNT(DISTINCT MEMBER_ID) * 100.0 / 
                 SUM(COUNT(DISTINCT MEMBER_ID)) OVER (), 2
             ) AS PERCENTAGE 
-        FROM OUTLIER_MEMBER_MONTHS WHERE YEAR = {year} AND STATE IS NOT NULL GROUP BY STATE;
+        FROM OUTLIER_MEMBER_MONTHS WHERE YEAR = {year} AND STATE IS NOT NULL GROUP BY STATE
+        ORDER BY PERCENTAGE;
     """)
 
 @st.cache_data
