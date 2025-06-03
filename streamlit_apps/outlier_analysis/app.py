@@ -7,12 +7,25 @@ st.markdown(
     """
     <style>
         [data-testid="stLogo"] {
-                height: 1.5rem;
-                margin: 0px;
-                max-width: calc(260px - 4.75rem);
-                font-weight: 700;
-                object-fit: fill;
-            }
+            margin: 0px;
+            max-width: unset;
+            font-weight: 700;
+            object-fit: fill;
+        }
+        [data-testid="stSidebarHeader"] {
+            padding-left: 14px;
+            padding-right: 14px;
+        }
+        .stSidebar {
+            min-width: 300px;
+            max-width: 300px;
+            transition: min-width 0.3s ease-in-out, width 0.3s ease-in-out;
+        }
+        .stSidebar[aria-expanded="false"] {
+            width: 0px !important;
+            min-width: 0px !important;
+            transition: min-width 0.3s ease-in-out, width 0.3s ease-in-out;
+        }
     </style>
     """,
     unsafe_allow_html=True

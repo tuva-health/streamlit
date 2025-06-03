@@ -13,6 +13,7 @@ from data import (
     get_outlier_claims_data,
     get_outlier_population_by_race,
     get_outlier_population_by_state,
+    get_total_members_count,
     get_v24_risk_scores
 )
 from utils import safe_extract, round_nearest_int, format_large_number
@@ -23,7 +24,8 @@ path_utils.add_repo_to_path(levels_up=3)
 
 def display_metrics(conn, year):
     """Display summary metrics in columns."""
-   
+    
+    total_members = get_total_members_count(conn, year)
     mean_paid = get_mean_paid(conn, year).iloc[0]
     avg_hcc_risk_score = get_avg_hcc_risk_score(conn, year).iloc[0]
     metrics_data = get_metrics_data(conn, year)
@@ -31,7 +33,7 @@ def display_metrics(conn, year):
     metrics_data["MEAN_PAID"] = mean_paid
 
     # Extract and sanitize values
-    total_population = safe_extract(metrics_data.get("MEMBER_MONTHS"), default=0, as_type=int)
+    total_outlier_members = safe_extract(metrics_data.get("MEMBER_MONTHS"), default=0, as_type=int)
     female_count = safe_extract(metrics_data.get("FEMALE_COUNT"), default=0, as_type=float)
     mean_age = safe_extract(metrics_data.get("MEAN_AGE"), default="N/A", as_type=Decimal)
     mean_paid = safe_extract(metrics_data.get("MEAN_PAID"), default=0.0, as_type=float)
@@ -39,10 +41,10 @@ def display_metrics(conn, year):
     total_encounters = safe_extract(claims_data.get("TOTAL_ENCOUNTERS"), default=0, as_type=int)
 
     # Compute derived metrics safely
-    percent_female = (female_count / total_population) * 100 if total_population else 0.0
-    encounter_per_1000 = (total_encounters / total_population) * 12000 if total_population else 0.0
+    percent_female = (female_count / total_outlier_members) * 100 if total_outlier_members else 0.0
+    encounter_per_1000 = (total_encounters / total_outlier_members) * 12000 if total_outlier_members else 0.0
     paid_per_encounter = (total_paid / total_encounters) if total_encounters else 0.0
-    paid_pmpm = (total_paid / total_population) if total_population else 0.0
+    paid_pmpm = (total_paid / total_outlier_members) if total_outlier_members else 0.0
     rounded_mean_age = round_nearest_int(mean_age)
     rounded_paid_pmpm = f"${round_nearest_int(paid_pmpm)}"
     rounded_encounter_per_1000 = round_nearest_int(encounter_per_1000)
@@ -51,12 +53,12 @@ def display_metrics(conn, year):
 
     col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 2, 4], gap="small")
     with col1:
-        st.metric("Members", total_population, border=True)
+        st.metric("Members", total_outlier_members, border=True)
         st.metric("Mean Age ", rounded_mean_age, border=True)
 
     with col2:
         st.metric("Percent Female", f"{percent_female:.2f}%", border=True)
-        st.metric("Avg HCC Risk Score", f"{avg_hcc_risk_score:.2f}", border=True)  # Replace with actual value if available
+        st.metric("Avg HCC Risk Score", f"{avg_hcc_risk_score:.2f}", border=True)
 
     with col3:
         st.metric("Paid Amount", format_large_number(total_paid), border=True)
@@ -69,7 +71,13 @@ def display_metrics(conn, year):
     with col5:
         st.markdown(
             f"""
-            **Inclusion Criteria:** All beneficiaries with annual claim costs > 2 std dev from mean (${mean_paid:,.2f})
+            **Inclusion Criteria:**  
+            All beneficiaries with annual claim costs > 2 std dev from mean (${mean_paid:,.2f})
+
+            
+            **Total Members:** {total_members}  
+            **Total Outlier Members:** {total_outlier_members}  
+            **Total Outlier Percentage:** {total_outlier_members / total_members * 100:,.2f}%
             """
         )
 
@@ -84,33 +92,35 @@ def display_metrics(conn, year):
         """,
             unsafe_allow_html=True,
         )
+
 def plot_bar_chart(df, x, y, title, height=260):
-        """Create a horizontal bar chart with Plotly."""
-        fig = px.bar(
-            df,
-            x=x,
-            y=y,
-            orientation="h",
-            text=x,
-            height=height,
-        )
-        fig.update_layout(
-            showlegend=False,
-            margin=dict(r=80),
-            xaxis_title=x,
-            yaxis_title=y,
-            yaxis=dict(
-                automargin=True,
-            ),
-            title=title,
-        )
-        fig.update_traces(
-            marker_color= "#64B0E1",
-            textposition="outside",
-            texttemplate="%{x}%" if x == "PERCENTAGE" else "%{x}",
-            cliponaxis=False,
-        )
-        return fig
+    """Create a horizontal bar chart with Plotly."""
+    fig = px.bar(
+        df,
+        x=x,
+        y=y,
+        orientation="h",
+        text=x,
+        height=height,
+    )
+    fig.update_layout(
+        showlegend=False,
+        margin=dict(r=80),
+        xaxis_title=x,
+        yaxis_title=y,
+        yaxis=dict(
+            automargin=True,
+        ),
+        title=title,
+        xaxis=dict(showticklabels=False),
+    )
+    fig.update_traces(
+        marker_color="#64B0E1",
+        textposition="outside",
+        texttemplate="%{x:.1f}%" if x == "PERCENTAGE" else "%{x}",
+        cliponaxis=False,
+    )
+    return fig
 
 def plot_risk_scores(risk_scores):
     """Plot risk scores distribution."""

@@ -110,6 +110,8 @@ encounter_group_fig.add_trace(
     row=1, col=3
 )
 
+encounter_group_fig.update_xaxes(showticklabels=False)
+
 encounter_group_fig.update_layout(
     height=220,
     width=1200,
@@ -179,7 +181,7 @@ encounter_type_fig.add_trace(
         x=paid_per_type["PAID_PER_ENCOUNTER"],
         y=paid_per_type["ENCOUNTER_TYPE"],
         marker_color=get_colors_for_df(paid_per_type),
-         text=[f"${int(round(x)):,}" for x in paid_per_type["PAID_PER_ENCOUNTER"]],
+        text=[f"${int(round(x)):,}" for x in paid_per_type["PAID_PER_ENCOUNTER"]],
         textposition='outside',
         cliponaxis=False,
         orientation='h',
@@ -193,6 +195,8 @@ encounter_type_fig.add_trace(
     ),
     row=1, col=3
 )
+
+encounter_type_fig.update_xaxes(showticklabels=False)
 
 encounter_type_fig.update_layout(
     height=500,

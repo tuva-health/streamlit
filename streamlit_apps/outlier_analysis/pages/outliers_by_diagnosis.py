@@ -88,6 +88,8 @@ diagnosis_category_fig.add_trace(
 category_count = len(full_category_labels)
 category_height = min(max(60 * category_count, 400), 3000)
 
+diagnosis_category_fig.update_xaxes(showticklabels=False)
+
 diagnosis_category_fig.update_layout(
     height=category_height,
     width=1200,
@@ -152,6 +154,8 @@ diagnosis_fig.add_trace(
 
 diagnosis_count = len(full_labels)
 diagnosis_height = min(max(60 * diagnosis_count, 400), 3000)
+
+diagnosis_fig.update_xaxes(showticklabels=False)
 
 diagnosis_fig.update_layout(
     height=diagnosis_height,
