@@ -3,7 +3,7 @@ from pathlib import Path
 import streamlit as st
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from data import (
+from snowflake_data import (
     get_encounters_per_1000_by_encounter_group,
     get_encounters_per_1000_by_encounter_type,
     get_paid_per_encounter_by_encounter_group,

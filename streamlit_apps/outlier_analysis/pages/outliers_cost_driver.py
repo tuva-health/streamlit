@@ -6,37 +6,47 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 sys.path.append(str(Path(__file__).resolve().parents[3]))
-from data import (
-    get_metrics_data,
-    get_mean_paid,
-    get_avg_hcc_risk_score,
-    get_outlier_claims_data,
-    get_outlier_population_by_race,
-    get_outlier_population_by_state,
-    get_v24_risk_scores
-)
-from utils import safe_extract, round_nearest_int, format_large_number
+# from snowflake_data import (
+#     get_metrics_data,
+#     get_mean_paid,
+#     get_avg_hcc_risk_score,
+#     get_outlier_claims_data,
+#     get_outlier_population_by_race,
+#     get_outlier_population_by_state,
+#     get_v24_risk_scores
+# )
+from utils import (
+    # safe_extract, 
+    round_nearest_int, 
+    format_large_number
+    )
 from shared import path_utils
+from csv_data import (
+    get_metrics_data_csv,
+    get_outlier_claims_data_csv,
+    get_mean_paid_csv,
+    get_v24_risk_score_csv,
+    get_outlier_population_by_race_csv,
+    get_outlier_population_by_state_csv
+)
+
 
 # Add the repo root (analytics/) to sys.path so we can import shared modules
 path_utils.add_repo_to_path(levels_up=3)
 
-def display_metrics(conn, year):
+def display_metrics(avg_hcc_risk_score, year):
     """Display summary metrics in columns."""
    
-    mean_paid = get_mean_paid(conn, year).iloc[0]
-    avg_hcc_risk_score = get_avg_hcc_risk_score(conn, year).iloc[0]
-    metrics_data = get_metrics_data(conn, year)
-    claims_data = get_outlier_claims_data(conn, year)
-    metrics_data["MEAN_PAID"] = mean_paid
+    metrics_data = get_metrics_data_csv(year)
+    claims_data = get_outlier_claims_data_csv(year)
+    mean_paid = get_mean_paid_csv(year)
 
     # Extract and sanitize values
-    total_population = safe_extract(metrics_data.get("MEMBER_MONTHS"), default=0, as_type=int)
-    female_count = safe_extract(metrics_data.get("FEMALE_COUNT"), default=0, as_type=float)
-    mean_age = safe_extract(metrics_data.get("MEAN_AGE"), default="N/A", as_type=Decimal)
-    mean_paid = safe_extract(metrics_data.get("MEAN_PAID"), default=0.0, as_type=float)
-    total_paid = safe_extract(claims_data.get("TOTAL_PAID"), default=0.0, as_type=float)
-    total_encounters = safe_extract(claims_data.get("TOTAL_ENCOUNTERS"), default=0, as_type=int)
+    total_population = metrics_data.get("TOTAL_COUNT", 0)
+    female_count = metrics_data.get("FEMALE_COUNT", 0)
+    mean_age = metrics_data.get("MEAN_AGE", 0)
+    total_paid = claims_data.get("TOTAL_PAID", 0.0)
+    total_encounters = claims_data.get("TOTAL_ENCOUNTERS", 0)
 
     # Compute derived metrics safely
     percent_female = (female_count / total_population) * 100 if total_population else 0.0
@@ -115,9 +125,9 @@ def plot_bar_chart(df, x, y, title, height=260):
 def plot_risk_scores(risk_scores):
     """Plot risk scores distribution."""
     # Calculate min, median, and max
-    min_val = risk_scores["RISK_SCORE"].min()
-    median_val = risk_scores["RISK_SCORE"].median()
-    max_val = risk_scores["RISK_SCORE"].max()
+    min_val = risk_scores.get("HCC_RISK_MIN", 0.0)
+    median_val = risk_scores.get("HCC_RISK_MEDIAN", 0.0)
+    max_val = risk_scores.get("HCC_RISK_MAX", 0.0)
 
     # Create a custom box plot showing only min, median, and max
     fig = go.Figure()
@@ -146,17 +156,16 @@ def main():
         st.error(f"Failed to connect to Snowflake: {e}")
         st.stop()
 
-    outlier_population_by_state = get_outlier_population_by_state(conn, year)
-    outlier_population_by_race = get_outlier_population_by_race(conn, year)
-    v24_risk_scores = get_v24_risk_scores(conn, year)
-
+    outlier_population_by_state = get_outlier_population_by_state_csv(year)
+    outlier_population_by_race = get_outlier_population_by_race_csv(year)
+    v24_risk_scores = get_v24_risk_score_csv(year)
     # --- Page Title and Description ---
     st.header("Outlier Cost Driver Dashboard", divider="grey")
     st.markdown(
         f"This dashboard presents key metrics and visualizations for outlier cost drivers in the year {year}."
     )
-
-    display_metrics(conn, year)
+    avg_hcc_risk_score = v24_risk_scores.get("HCC_RISK_MEAN", 0.0)
+    display_metrics(avg_hcc_risk_score, year)
 
     with st.container():
         graph1, graph2 = st.columns([1, 1], gap="large")

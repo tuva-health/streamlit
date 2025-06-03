@@ -1,5 +1,5 @@
 import streamlit as st
-from data import get_year_list
+from snowflake_data import get_year_list
 
 st.set_page_config(page_icon="assets/tuva_icon.ico", layout="wide")
 
