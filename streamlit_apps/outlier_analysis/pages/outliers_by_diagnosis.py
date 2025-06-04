@@ -7,6 +7,9 @@ from snowflake_data import (
     get_pmpm_by_diagnosis,
     get_pmpm_by_diagnosis_category,
 )
+from csv_data import (
+    get_pmpm_by_diagnosis_category_csv
+)
 
 # Add the repo root (analytics/) to sys.path so we can import shared modules
 sys.path.append(str(Path(__file__).resolve().parents[3]))
@@ -17,8 +20,8 @@ path_utils.add_repo_to_path(levels_up=3)
 conn = st.connection("snowflake")
 year = st.session_state.get("page_selector") if "page_selector" in st.session_state else None
 
-pmpm_diagnosis_category = get_pmpm_by_diagnosis_category(conn, year)
-pmpm_diagnosis = get_pmpm_by_diagnosis(conn, year)
+pmpm_diagnosis_category = get_pmpm_by_diagnosis_category(conn, year).fillna('null')
+pmpm_diagnosis = get_pmpm_by_diagnosis(conn, year).fillna('null')
 
 def truncate_label(label, max_length=30):
     return str(label) if len(str(label)) <= max_length else str(label)[:max_length] + "..."

@@ -51,10 +51,12 @@ def get_outlier_claims_data_csv(selected_year):
     
     total_paid = outlier_claims_agg_data[mask]['PAID_AMOUNT'].sum()
     total_encounters = outlier_claims_agg_data[mask]['ENCOUNTER_ID'].nunique()
+    total_members = outlier_claims_agg_data[mask]['TOTAL_MEMBERS'].iloc[0]
     
     return {
         "TOTAL_PAID": total_paid, 
-        "TOTAL_ENCOUNTERS": total_encounters
+        "TOTAL_ENCOUNTERS": total_encounters,
+        "TOTAL_MEMBERS": total_members
         }
     
     

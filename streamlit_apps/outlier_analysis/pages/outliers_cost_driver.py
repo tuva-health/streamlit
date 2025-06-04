@@ -44,6 +44,7 @@ def display_metrics(avg_hcc_risk_score, year):
     mean_paid = get_mean_paid_csv(year)
 
     # Extract and sanitize values
+    total_members = claims_data.get("TOTAL_MEMBERS")
     total_outlier_members = metrics_data.get("TOTAL_COUNT", 0)
     female_count = metrics_data.get("FEMALE_COUNT", 0)
     mean_age = metrics_data.get("MEAN_AGE", 0)
@@ -86,8 +87,8 @@ def display_metrics(avg_hcc_risk_score, year):
 
             
             **Total Members:** {total_outlier_members}  
-            **Total Outlier Members:** {total_outlier_members}  
-            **Total Outlier Percentage:** {total_outlier_members / total_outlier_members * 100:,.2f}%
+            **Total Outlier Members:** {total_members}  
+            **Total Outlier Percentage:** {total_outlier_members / total_members * 100:,.2f}%
             """
         )
 
