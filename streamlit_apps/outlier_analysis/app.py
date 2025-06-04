@@ -1,5 +1,5 @@
 import streamlit as st
-from snowflake_data import get_year_list
+from csv_data import get_year_list
 
 st.set_page_config(page_icon="assets/tuva_icon.ico", layout="wide")
 
@@ -7,12 +7,25 @@ st.markdown(
     """
     <style>
         [data-testid="stLogo"] {
-                height: 1.5rem;
-                margin: 0px;
-                max-width: calc(260px - 4.75rem);
-                font-weight: 700;
-                object-fit: fill;
-            }
+            margin: 0px;
+            max-width: unset;
+            font-weight: 700;
+            object-fit: fill;
+        }
+        [data-testid="stSidebarHeader"] {
+            padding-left: 14px;
+            padding-right: 14px;
+        }
+        .stSidebar {
+            min-width: 300px;
+            max-width: 300px;
+            transition: min-width 0.3s ease-in-out, width 0.3s ease-in-out;
+        }
+        .stSidebar[aria-expanded="false"] {
+            width: 0px !important;
+            min-width: 0px !important;
+            transition: min-width 0.3s ease-in-out, width 0.3s ease-in-out;
+        }
     </style>
     """,
     unsafe_allow_html=True
@@ -45,7 +58,8 @@ app = st.navigation([
     dashboard_page, outliers_by_encounter_page, outliers_by_diagnosis_page
     ], position="hidden")
 
-year_list = get_year_list(st.connection("snowflake"))
+# year_list = get_year_list(st.connection("snowflake"))
+year_list = get_year_list()
 with st.sidebar:
     selected_year = st.selectbox(
             "Select Year",

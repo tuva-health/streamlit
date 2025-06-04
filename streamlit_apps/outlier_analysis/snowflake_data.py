@@ -95,18 +95,20 @@ def get_v24_risk_scores(_conn: str, year: str):
 # OUTLIERS BY ENCOUNTER
 
 @st.cache_data
-def get_member_count(_conn: str, year: str):
-    return _conn.query(f"SELECT COUNT(DISTINCT MEMBER_ID) as total FROM OUTLIER_MEMBER_MONTHS WHERE YEAR={year}").iloc[0]['TOTAL']
+def get_total_members_count(_conn: str, year: str):
+    return _conn.query(f"SELECT COUNT(DISTINCT MEMBER_ID) as total FROM CORE.MEMBER_MONTHS WHERE YEAR_MONTH BETWEEN {year}01 AND {year}12").iloc[0]['TOTAL']
 
+@st.cache_data
+def get_outlier_members_count(_conn: str, year: str):
+    return _conn.query(f"SELECT COUNT(DISTINCT MEMBER_ID) as total FROM OUTLIER_MEMBER_MONTHS WHERE YEAR={year}").iloc[0]['TOTAL']
 
 @st.cache_data
 def get_encounter_count(_conn: str, year: str):
     return _conn.query(f"SELECT COUNT(DISTINCT ENCOUNTER_ID) as total FROM OUTLIER_CLAIMS_AGG WHERE INCR_YEAR={year}").iloc[0]['TOTAL']
 
-
 @st.cache_data
 def get_pmpm_by_encounter_group(_conn: str, year: str):
-    member_count = get_member_count(_conn, year)
+    member_count = get_outlier_members_count(_conn, year)
     return _conn.query(f"""
         SELECT
             ENCOUNTER_GROUP,
@@ -129,7 +131,7 @@ def get_pmpm_by_encounter_group(_conn: str, year: str):
 
 @st.cache_data
 def get_encounters_per_1000_by_encounter_group(_conn: str, year: str):
-    member_count = get_member_count(_conn, year)
+    member_count = get_outlier_members_count(_conn, year)
     return _conn.query(f"""
         SELECT
             ENCOUNTER_GROUP,
@@ -173,7 +175,7 @@ def get_paid_per_encounter_by_encounter_group(_conn: str, year: str):
 
 @st.cache_data
 def get_pmpm_by_encounter_type(_conn: str, year: str):
-    member_count = get_member_count(_conn, year)
+    member_count = get_outlier_members_count(_conn, year)
     return _conn.query(f"""
         SELECT
             ENCOUNTER_GROUP,
@@ -197,7 +199,7 @@ def get_pmpm_by_encounter_type(_conn: str, year: str):
 
 @st.cache_data
 def get_encounters_per_1000_by_encounter_type(_conn: str, year: str):
-    member_count = get_member_count(_conn, year)
+    member_count = get_outlier_members_count(_conn, year)
     return _conn.query(f"""
         SELECT
             ENCOUNTER_GROUP,
@@ -245,13 +247,14 @@ def get_paid_per_encounter_by_encounter_type(_conn: str, year: str):
 
 @st.cache_data
 def get_pmpm_by_diagnosis_category(_conn: str, year: str):
-    member_count = get_member_count(_conn, year)
+    member_count = get_outlier_members_count(_conn, year)
     return _conn.query(f"""
         WITH category_pmpm AS (
             SELECT
                 DX_CCSR_CATEGORY2,
                 SUM(PAID_AMOUNT) / {member_count} AS PMPM
             FROM OUTLIER_CLAIMS_AGG
+            WHERE INCR_YEAR={year}
             GROUP BY DX_CCSR_CATEGORY2
         ),
         total_pmpm AS (
@@ -271,7 +274,7 @@ def get_pmpm_by_diagnosis_category(_conn: str, year: str):
 
 @st.cache_data
 def get_pmpm_by_diagnosis(_conn: str, year: str):
-    member_count = get_member_count(_conn, year)
+    member_count = get_outlier_members_count(_conn, year)
     return _conn.query(f"""
         WITH category_pmpm AS (
             SELECT

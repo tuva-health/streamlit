@@ -19,22 +19,26 @@ outlier_member_path = "data/outlier_member_months.csv"
 outlier_member_months_data = load_data(outlier_member_path)
 
 # Year list for dropdown selection
-year_list = outlier_member_months_data['YEAR'].unique().tolist()
+@st.cache_data
+def get_year_list():
+    return sorted(outlier_member_months_data['YEAR'].unique().tolist())
 
 @st.cache_data
 def get_metrics_data_csv(selected_year):
     """Get the number of member months for the selected year."""
     if selected_year:
         # Convert selected_year to string for comparison
-        mask = outlier_member_months_data['YEAR'].astype(str) == str(selected_year)
+        mask1 = outlier_member_months_data['YEAR'].astype(str) == str(selected_year)
+
+        total_outlier_count = outlier_member_months_data[mask1]['MEMBER_ID'].nunique()
+        mean_age = outlier_member_months_data[mask1]['AGE'].mean()
+        female_count = outlier_member_months_data[mask1 & (outlier_member_months_data["SEX"] == 'female')]['MEMBER_ID'].nunique()
         
-        
-        total_count = outlier_member_months_data[mask]['MEMBER_ID'].nunique()
-        mean_age = outlier_member_months_data[mask]['AGE'].mean()
-        female_count = outlier_member_months_data[mask & (outlier_member_months_data["SEX"] == 'female')]['MEMBER_ID'].nunique()
-        
+        mask2 = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
+        total_count = outlier_claims_agg_data[mask2]['TOTAL_MEMBERS'].iloc[0]
         return {
-            "TOTAL_COUNT": total_count, 
+            "TOTAL_COUNT": total_count,
+            "TOTAL_OUTLIER_COUNT": total_outlier_count,
             "MEAN_AGE": mean_age, 
             "FEMALE_COUNT": female_count
             }

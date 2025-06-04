@@ -22,7 +22,7 @@ sys.path.append(str(Path(__file__).resolve().parents[3]))
 from shared import path_utils
 path_utils.add_repo_to_path(levels_up=3)
 
-conn = st.connection("snowflake")
+# conn = st.connection("snowflake")
 year = st.session_state.get("page_selector") if "page_selector" in st.session_state else None
 
 
@@ -117,6 +117,8 @@ encounter_group_fig.add_trace(
     row=1, col=3
 )
 
+encounter_group_fig.update_xaxes(showticklabels=False)
+
 encounter_group_fig.update_layout(
     height=220,
     width=1200,
@@ -200,6 +202,8 @@ encounter_type_fig.add_trace(
     ),
     row=1, col=3
 )
+
+encounter_type_fig.update_xaxes(showticklabels=False)
 
 encounter_type_fig.update_layout(
     height=500,
