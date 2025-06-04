@@ -1,5 +1,5 @@
 import streamlit as st
-from snowflake_data import get_year_list
+from csv_data import get_year_list
 
 st.set_page_config(page_icon="assets/tuva_icon.ico", layout="wide")
 
@@ -58,7 +58,8 @@ app = st.navigation([
     dashboard_page, outliers_by_encounter_page, outliers_by_diagnosis_page
     ], position="hidden")
 
-year_list = get_year_list(st.connection("snowflake"))
+# year_list = get_year_list(st.connection("snowflake"))
+year_list = get_year_list()
 with st.sidebar:
     selected_year = st.selectbox(
             "Select Year",

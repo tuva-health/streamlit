@@ -19,21 +19,26 @@ outlier_member_path = "data/outlier_member_months.csv"
 outlier_member_months_data = load_data(outlier_member_path)
 
 # Year list for dropdown selection
-year_list = outlier_member_months_data['YEAR'].unique().tolist()
+@st.cache_data
+def get_year_list():
+    return sorted(outlier_member_months_data['YEAR'].unique().tolist())
 
+@st.cache_data
 def get_metrics_data_csv(selected_year):
     """Get the number of member months for the selected year."""
     if selected_year:
         # Convert selected_year to string for comparison
-        mask = outlier_member_months_data['YEAR'].astype(str) == str(selected_year)
+        mask1 = outlier_member_months_data['YEAR'].astype(str) == str(selected_year)
+
+        total_outlier_count = outlier_member_months_data[mask1]['MEMBER_ID'].nunique()
+        mean_age = outlier_member_months_data[mask1]['AGE'].mean()
+        female_count = outlier_member_months_data[mask1 & (outlier_member_months_data["SEX"] == 'female')]['MEMBER_ID'].nunique()
         
-        
-        total_count = outlier_member_months_data[mask]['MEMBER_ID'].nunique()
-        mean_age = outlier_member_months_data[mask]['AGE'].mean()
-        female_count = outlier_member_months_data[mask & (outlier_member_months_data["SEX"] == 'female')]['MEMBER_ID'].nunique()
-        
+        mask2 = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
+        total_count = outlier_claims_agg_data[mask2]['TOTAL_MEMBERS'].iloc[0]
         return {
-            "TOTAL_COUNT": total_count, 
+            "TOTAL_COUNT": total_count,
+            "TOTAL_OUTLIER_COUNT": total_outlier_count,
             "MEAN_AGE": mean_age, 
             "FEMALE_COUNT": female_count
             }
@@ -45,27 +50,34 @@ def get_metrics_data_csv(selected_year):
         }
 
 
-def get_outlier_claims_data_csv(selected_year):
-    """Get the total paid amount and total encounters for the selected year."""
+@st.cache_data
+def get_outlier_claims_total_paid_csv(selected_year):
+    """Get the total paid amount for the selected year."""
     mask = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
+    total_paid = 0
+    if not outlier_claims_agg_data[mask].empty:
+        total_paid = outlier_claims_agg_data[mask]['PAID_AMOUNT'].sum()
     
-    total_paid = outlier_claims_agg_data[mask]['PAID_AMOUNT'].sum()
-    total_encounters = outlier_claims_agg_data[mask]['ENCOUNTER_ID'].nunique()
-    total_members = outlier_claims_agg_data[mask]['TOTAL_MEMBERS'].iloc[0]
+    return total_paid
     
-    return {
-        "TOTAL_PAID": total_paid, 
-        "TOTAL_ENCOUNTERS": total_encounters,
-        "TOTAL_MEMBERS": total_members
-        }
-    
+@st.cache_data
+def get_outlier_claims_total_encounters_csv(selected_year):
+    """Get the total number of encounters for the selected year."""
+    mask = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
+    total_encounters = 0
+    if not outlier_claims_agg_data[mask].empty:
+        total_encounters = outlier_claims_agg_data[mask]['ENCOUNTER_ID'].nunique()
+        
+    return total_encounters
     
 
+@st.cache_data
 def get_mean_paid_csv(selected_year):
     """Get the mean paid amount for the selected year."""
     mask = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
     return outlier_claims_agg_data[mask]['MEAN_PAID'].iloc[0] if not outlier_claims_agg_data[mask].empty else 0.0
 
+@st.cache_data
 def get_v24_risk_score_csv(selected_year):
     """Get the average HCC risk score for the selected year."""
     mask = outlier_member_months_data['YEAR'].astype(str) == str(selected_year)
@@ -86,6 +98,7 @@ def get_v24_risk_score_csv(selected_year):
         "V24_RISK_MAX": v24_risk_max
     }
 
+@st.cache_data
 def get_outlier_population_by_race_csv(selected_year):
     """Get the outlier population by population for the selected year."""
     mask = outlier_member_months_data['YEAR'].astype(str) == str(selected_year)
@@ -98,6 +111,7 @@ def get_outlier_population_by_race_csv(selected_year):
         
     return population_by_race
 
+@st.cache_data
 def get_outlier_population_by_state_csv(selected_year):
     """Get the outlier population by population for the selected year."""
     mask = outlier_member_months_data['YEAR'].astype(str) == str(selected_year)
@@ -109,3 +123,226 @@ def get_outlier_population_by_state_csv(selected_year):
         population_by_state = population_by_state.sort_values('PERCENTAGE')
         
     return population_by_state
+
+# OUTLIERS BY ENCOUNTER  #
+
+@st.cache_data
+def get_member_count(year):
+    """Get the total number of members for the selected year."""
+    mask = outlier_member_months_data['YEAR'].astype(str) == str(year)
+    member_count = 0
+    if not outlier_member_months_data[mask].empty:
+        member_count = outlier_member_months_data[mask]['MEMBER_ID'].nunique()
+    return member_count
+
+@st.cache_data
+def get_encounter_count(year):
+    """Get the total number of encounters for the selected year."""
+    mask = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(year)
+    encounter_count = 0
+    if not outlier_claims_agg_data[mask].empty:
+        encounter_count = outlier_claims_agg_data[mask]['ENCOUNTER_ID'].nunique()
+    return encounter_count
+
+
+@st.cache_data
+def get_pmpm_and_encounters_by_group_csv(selected_year):
+    """Get PMPM and ENCOUNTERS_PER_1000 by encounter group for the selected year."""
+
+    member_count = get_member_count(selected_year)
+    encounter_count = get_encounter_count(selected_year)
+    mask = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
+    filtered = outlier_claims_agg_data[mask]
+
+    if member_count == 0 or filtered.empty:
+        return pd.DataFrame(columns=['ENCOUNTER_GROUP', 'PMPM', 'ENCOUNTERS_PER_1000', 'PAID_PER_ENCOUNTER'])
+    filtered["ENCOUNTER_GROUP"] = filtered["ENCOUNTER_GROUP"].fillna('null')
+    
+    grouped_encounter_counts = (
+        filtered
+        .groupby('ENCOUNTER_GROUP')['ENCOUNTER_ID']
+        .nunique()
+        .reset_index(name='ENCOUNTER_COUNT')
+    )
+    merged_data = pd.merge(filtered, grouped_encounter_counts, on='ENCOUNTER_GROUP')
+    
+    # Grouping and calculating PMPM
+    pmpm_df = (
+        merged_data
+        .groupby('ENCOUNTER_GROUP', as_index=False)['PAID_AMOUNT']
+        .sum()
+        .assign(PMPM=lambda df: df['PAID_AMOUNT'] / member_count)
+        [['ENCOUNTER_GROUP', 'PMPM', 'PAID_AMOUNT']]
+    )
+
+
+    # Grouping and calculating ENCOUNTERS_PER_1000
+    encounter_per_1000_df = (
+        filtered
+        .groupby('ENCOUNTER_GROUP', as_index=False)['ENCOUNTER_ID']
+        .nunique()
+        .assign(ENCOUNTERS_PER_1000=lambda df: df['ENCOUNTER_ID'] * 12000.0 / member_count)
+        [['ENCOUNTER_GROUP', 'ENCOUNTERS_PER_1000']]
+    )
+
+    #  Grouping and calculating PAID_PER_ENCOUNTER
+    paid_per_encounter_per_group_df = (
+        merged_data
+        .groupby('ENCOUNTER_GROUP', as_index=False)
+        .agg({'PAID_AMOUNT': 'sum', 'ENCOUNTER_ID': 'nunique'})
+        .rename(columns={'ENCOUNTER_ID': 'ENCOUNTER_COUNT'})
+        .assign(PAID_PER_ENCOUNTER=lambda df: df['PAID_AMOUNT'] / df['ENCOUNTER_COUNT'])
+        .assign(
+            PAID_PER_ENCOUNTER=lambda df: df['PAID_PER_ENCOUNTER'].replace([float('inf'), -float('inf')], 0.0)
+        )
+        [['ENCOUNTER_GROUP', 'PAID_PER_ENCOUNTER']]
+    )
+
+
+    # Merge encounter per 1000, PMPM, and paid per encounter
+    result = pmpm_df.merge(encounter_per_1000_df, on='ENCOUNTER_GROUP', how='outer') \
+                    .merge(paid_per_encounter_per_group_df, on='ENCOUNTER_GROUP', how='outer')
+
+    # Add Grand Total row
+    grand_total = {
+        'ENCOUNTER_GROUP': 'Grand Total',
+        'PMPM': result['PMPM'].sum(skipna=True),
+        'ENCOUNTERS_PER_1000': result['ENCOUNTERS_PER_1000'].sum(skipna=True),
+        'PAID_PER_ENCOUNTER': result['PAID_AMOUNT'].sum(skipna=True) / encounter_count
+    }
+
+    result = pd.concat([result, pd.DataFrame([grand_total])], ignore_index=True).dropna(subset=['ENCOUNTER_GROUP'])
+    result = result.sort_values(by='PMPM', ascending=True, ignore_index=True)
+
+    return result
+
+
+@st.cache_data
+def get_pmpm_and_encounters_by_type_csv(selected_year):
+    """Get PMPM and ENCOUNTERS_PER_1000 by encounter type for the selected year."""
+    member_count = get_member_count(selected_year)
+    encounter_count = get_encounter_count(selected_year)
+    mask = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
+    filtered = outlier_claims_agg_data[mask]
+    if member_count == 0 or filtered.empty:
+        return pd.DataFrame(columns=['ENCOUNTER_GROUP', 'ENCOUNTER_TYPE', 'PAID_AMOUNT', 'PMPM', 'ENCOUNTERS_PER_1000', 'PAID_PER_ENCOUNTER'])
+    
+    filtered["ENCOUNTER_GROUP"] = filtered["ENCOUNTER_GROUP"].fillna('null')
+    filtered["ENCOUNTER_TYPE"] = filtered["ENCOUNTER_TYPE"].fillna('null')
+
+    # Calcuate the number of encounters per group and type
+    grouped_encounter_counts = (
+        filtered
+        .groupby(['ENCOUNTER_GROUP', 'ENCOUNTER_TYPE'])['ENCOUNTER_ID']
+        .nunique()
+        .reset_index(name='ENCOUNTER_COUNT')
+    )
+
+    merged_data = pd.merge(filtered, grouped_encounter_counts, on=['ENCOUNTER_GROUP', 'ENCOUNTER_TYPE'])
+    
+    # Grouping and calculating PMPM
+    pmpm_df = (
+        merged_data
+        .groupby(['ENCOUNTER_GROUP', 'ENCOUNTER_TYPE'], as_index=False)['PAID_AMOUNT']
+        .sum()
+        .assign(PMPM=lambda df: df['PAID_AMOUNT'] / member_count)
+        [['ENCOUNTER_GROUP', 'ENCOUNTER_TYPE', 'PAID_AMOUNT', 'PMPM']]
+    )
+
+    # Grouping and calculating ENCOUNTERS_PER_1000
+    encounter_per_1000_df = (
+        filtered
+        .groupby(['ENCOUNTER_GROUP', 'ENCOUNTER_TYPE'], as_index=False)['ENCOUNTER_ID']
+        .nunique()
+        .assign(ENCOUNTERS_PER_1000=lambda df: df['ENCOUNTER_ID'] * 12000.0 / member_count)
+        [['ENCOUNTER_GROUP', 'ENCOUNTER_TYPE', 'ENCOUNTERS_PER_1000']]
+    )
+
+    #  Grouping and calculating PAID_PER_ENCOUNTER
+    paid_per_encounter_per_group_df = (
+        merged_data
+        .groupby(['ENCOUNTER_GROUP', 'ENCOUNTER_TYPE'], as_index=False)
+        .agg({'PAID_AMOUNT': 'sum', 'ENCOUNTER_ID': 'nunique'})
+        .rename(columns={'ENCOUNTER_ID': 'ENCOUNTER_COUNT'})
+        .assign(PAID_PER_ENCOUNTER=lambda df: df['PAID_AMOUNT'] / df['ENCOUNTER_COUNT']).assign(
+            PAID_PER_ENCOUNTER=lambda df: df['PAID_PER_ENCOUNTER'].replace([float('inf'), -float('inf')], 0.0)
+        )
+        [['ENCOUNTER_GROUP', 'ENCOUNTER_TYPE', 'PAID_PER_ENCOUNTER']]
+    )
+
+    # Merge encounter per 1000, PMPM, and paid per encounter
+    result = pmpm_df.merge(encounter_per_1000_df, on=['ENCOUNTER_TYPE', 'ENCOUNTER_GROUP'], how='outer') \
+                    .merge(paid_per_encounter_per_group_df, on=['ENCOUNTER_TYPE', 'ENCOUNTER_GROUP'], how='outer')
+
+    # Add Grand Total row
+    grand_total = {
+        'ENCOUNTER_GROUP': 'Grand Total',
+        'ENCOUNTER_TYPE': 'Grand Total',
+        'PMPM': result['PMPM'].sum(skipna=True),
+        'ENCOUNTERS_PER_1000': result['ENCOUNTERS_PER_1000'].sum(skipna=True),
+        'PAID_PER_ENCOUNTER': result['PAID_AMOUNT'].sum(skipna=True) / encounter_count
+    }
+
+    result = pd.concat([result, pd.DataFrame([grand_total])], ignore_index=True).dropna(subset=['ENCOUNTER_GROUP'])
+    result = result.sort_values(by='PMPM', ascending=True, ignore_index=True)
+    return result
+
+
+# OUTLIERS BY Diagnosis  #
+
+@st.cache_data
+def get_pmpm_by_diagnosis_category_csv(selected_year):
+    """Get PMPM by diagnosis category for the selected year."""
+
+    member_count = get_member_count(selected_year)
+    mask = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
+    filtered = outlier_claims_agg_data[mask]
+    filtered["DX_CCSR_CATEGORY2"] = filtered["DX_CCSR_CATEGORY2"].fillna('null')
+    if member_count == 0 or filtered.empty:
+        return pd.DataFrame(columns=['DX_CCSR_CATEGORY2', 'PMPM', 'CUMULATIVE_PMPM', 'PERCENT_OF_TOTAL_PMPM'])
+        
+    pmpm_df = (
+        filtered
+        .groupby('DX_CCSR_CATEGORY2', as_index=False)['PAID_AMOUNT']
+        .sum()
+        .assign(PMPM=lambda df: df['PAID_AMOUNT'] / member_count)
+        .assign(
+            PMPM=lambda df: df['PMPM'].replace([float('inf'), -float('inf')], 0.0)
+        )
+        .assign(PERCENT_OF_TOTAL_PMPM=lambda df: (df['PMPM'] / df['PMPM'].sum()) * 100)
+        .sort_values(by='PMPM', ascending=False,  ignore_index=True)
+        [['DX_CCSR_CATEGORY2', 'PMPM', 'PERCENT_OF_TOTAL_PMPM']]
+    )
+
+    result = (pmpm_df.assign(CUMULATIVE_PMPM=lambda df: df['PMPM'].cumsum())
+              [['DX_CCSR_CATEGORY2', 'PMPM', 'CUMULATIVE_PMPM', 'PERCENT_OF_TOTAL_PMPM']])
+    result = result.sort_values(by='PMPM', ascending=True, ignore_index=True)
+    return result
+
+@st.cache_data
+def get_pmpm_by_diagnosis_csv(selected_year):
+    """Get PMPM by diagnosis for the selected year."""
+    member_count = get_member_count(selected_year)
+    mask = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
+    filtered = outlier_claims_agg_data[mask]
+    filtered["DX_DESCRIPTION"] = filtered["DX_DESCRIPTION"].fillna('null')
+    if member_count == 0 or filtered.empty:
+        return pd.DataFrame(columns=['DX_DESCRIPTION', 'PMPM', 'CUMULATIVE_PMPM', 'PERCENT_OF_TOTAL_PMPM'])
+    
+    pmpm_df = (
+        filtered
+        .groupby('DX_DESCRIPTION', as_index=False)['PAID_AMOUNT']
+        .sum()
+        .assign(PMPM=lambda df: df['PAID_AMOUNT'] / member_count)
+        .assign(
+            PMPM=lambda df: df['PMPM'].replace([float('inf'), -float('inf')], 0.0)
+        )
+        .assign(PERCENT_OF_TOTAL_PMPM=lambda df: (df['PMPM'] / df['PMPM'].sum()) * 100)
+        .sort_values(by='PMPM', ascending=False, ignore_index=True)
+        [['DX_DESCRIPTION', 'PMPM', 'PERCENT_OF_TOTAL_PMPM']]
+    )
+
+    result = (pmpm_df.assign(CUMULATIVE_PMPM=lambda df: df['PMPM'].cumsum())
+              [['DX_DESCRIPTION', 'PMPM', 'CUMULATIVE_PMPM', 'PERCENT_OF_TOTAL_PMPM']])
+    result = result.sort_values(by='PMPM', ascending=True, ignore_index=True)
+    return result

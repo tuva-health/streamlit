@@ -24,7 +24,8 @@ from utils import (
 from shared import path_utils
 from csv_data import (
     get_metrics_data_csv,
-    get_outlier_claims_data_csv,
+    get_outlier_claims_total_paid_csv,
+    get_outlier_claims_total_encounters_csv,
     get_mean_paid_csv,
     get_v24_risk_score_csv,
     get_outlier_population_by_race_csv,
@@ -40,16 +41,15 @@ def display_metrics(avg_hcc_risk_score, year):
 
     # total_members = get_total_members_count(conn, year)
     metrics_data = get_metrics_data_csv(year)
-    claims_data = get_outlier_claims_data_csv(year)
+    total_paid = get_outlier_claims_total_paid_csv(year)
     mean_paid = get_mean_paid_csv(year)
 
     # Extract and sanitize values
-    total_members = claims_data.get("TOTAL_MEMBERS")
-    total_outlier_members = metrics_data.get("TOTAL_COUNT", 0)
+    total_members = metrics_data.get("TOTAL_COUNT")
+    total_outlier_members = metrics_data.get("TOTAL_OUTLIER_COUNT", 0)
     female_count = metrics_data.get("FEMALE_COUNT", 0)
     mean_age = metrics_data.get("MEAN_AGE", 0)
-    total_paid = claims_data.get("TOTAL_PAID", 0.0)
-    total_encounters = claims_data.get("TOTAL_ENCOUNTERS", 0)
+    total_encounters = get_outlier_claims_total_encounters_csv(year)
 
     # Compute derived metrics safely
     percent_female = (female_count / total_outlier_members) * 100 if total_outlier_members else 0.0
@@ -161,11 +161,11 @@ def plot_risk_scores(risk_scores):
 
 def main():
     year = st.session_state.get("page_selector") if "page_selector" in st.session_state else None
-    try:
-        conn = st.connection("snowflake")
-    except Exception as e:
-        st.error(f"Failed to connect to Snowflake: {e}")
-        st.stop()
+    # try:
+    #     conn = st.connection("snowflake")
+    # except Exception as e:
+    #     st.error(f"Failed to connect to Snowflake: {e}")
+    #     st.stop()
 
     outlier_population_by_state = get_outlier_population_by_state_csv(year)
     outlier_population_by_race = get_outlier_population_by_race_csv(year)

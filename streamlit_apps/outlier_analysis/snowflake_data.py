@@ -254,6 +254,7 @@ def get_pmpm_by_diagnosis_category(_conn: str, year: str):
                 DX_CCSR_CATEGORY2,
                 SUM(PAID_AMOUNT) / {member_count} AS PMPM
             FROM OUTLIER_CLAIMS_AGG
+            WHERE INCR_YEAR={year}
             GROUP BY DX_CCSR_CATEGORY2
         ),
         total_pmpm AS (
