@@ -7,9 +7,6 @@ from snowflake_data import (
     get_pmpm_by_diagnosis,
     get_pmpm_by_diagnosis_category,
 )
-from csv_data import (
-    get_pmpm_by_diagnosis_category_csv
-)
 
 # Add the repo root (analytics/) to sys.path so we can import shared modules
 sys.path.append(str(Path(__file__).resolve().parents[3]))
