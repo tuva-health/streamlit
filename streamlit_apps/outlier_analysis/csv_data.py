@@ -45,18 +45,23 @@ def get_metrics_data_csv(selected_year):
         }
 
 
-def get_outlier_claims_data_csv(selected_year):
-    """Get the total paid amount and total encounters for the selected year."""
+def get_outlier_claims_total_paid_csv(selected_year):
+    """Get the total paid amount for the selected year."""
     mask = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
+    total_paid = 0
+    if not outlier_claims_agg_data[mask].empty:
+        total_paid = outlier_claims_agg_data[mask]['PAID_AMOUNT'].sum()
     
-    total_paid = outlier_claims_agg_data[mask]['PAID_AMOUNT'].sum()
-    total_encounters = outlier_claims_agg_data[mask]['ENCOUNTER_ID'].nunique()
+    return total_paid
     
-    return {
-        "TOTAL_PAID": total_paid, 
-        "TOTAL_ENCOUNTERS": total_encounters
-        }
-    
+def get_outlier_claims_total_encounters_csv(selected_year):
+    """Get the total number of encounters for the selected year."""
+    mask = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
+    total_encounters = 0
+    if not outlier_claims_agg_data[mask].empty:
+        total_encounters = outlier_claims_agg_data[mask]['ENCOUNTER_ID'].nunique()
+        
+    return total_encounters
     
 
 def get_mean_paid_csv(selected_year):
