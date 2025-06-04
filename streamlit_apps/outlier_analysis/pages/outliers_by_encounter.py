@@ -3,14 +3,18 @@ from pathlib import Path
 import streamlit as st
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from snowflake_data import (
-    get_encounters_per_1000_by_encounter_group,
-    get_encounters_per_1000_by_encounter_type,
-    get_paid_per_encounter_by_encounter_group,
-    get_paid_per_encounter_by_encounter_type,
-    get_pmpm_by_encounter_group,
-    get_pmpm_by_encounter_type
-)
+# from snowflake_data import (
+#     get_encounters_per_1000_by_encounter_group,
+#     get_encounters_per_1000_by_encounter_type,
+#     get_paid_per_encounter_by_encounter_group,
+#     get_paid_per_encounter_by_encounter_type,
+#     get_pmpm_by_encounter_group,
+#     get_pmpm_by_encounter_type
+# )
+from csv_data import (
+    get_pmpm_and_encounters_by_group_csv,
+    get_pmpm_and_encounters_by_type_csv
+    )
 
 # Add the repo root (analytics/) to sys.path so we can import shared modules
 sys.path.append(str(Path(__file__).resolve().parents[3]))
@@ -21,15 +25,18 @@ path_utils.add_repo_to_path(levels_up=3)
 conn = st.connection("snowflake")
 year = st.session_state.get("page_selector") if "page_selector" in st.session_state else None
 
-pmpm_group = get_pmpm_by_encounter_group(conn, year).fillna('null')
-per_1000_group = get_encounters_per_1000_by_encounter_group(conn, year).fillna('null')
-paid_per_group = get_paid_per_encounter_by_encounter_group(conn, year).fillna('null')
 
-pmpm_type = get_pmpm_by_encounter_type(conn, year).fillna('null')
-per_1000_type = get_encounters_per_1000_by_encounter_type(conn, year).fillna('null')
-paid_per_type = get_paid_per_encounter_by_encounter_type(conn, year).fillna('null')
+outlier_encouter_group_data = get_pmpm_and_encounters_by_group_csv(year)
+# pmpm_group = get_pmpm_by_encounter_group(conn, year).fillna('null')
+# per_1000_group = get_encounters_per_1000_by_encounter_group(conn, year).fillna('null')
+# paid_per_group = get_paid_per_encounter_by_encounter_group(conn, year).fillna('null')
 
-encounter_groups = pmpm_group["ENCOUNTER_GROUP"].unique()
+
+outlier_encouter_type_data = get_pmpm_and_encounters_by_type_csv(year)
+# per_1000_type = get_encounters_per_1000_by_encounter_type(conn, year).fillna('null')
+# paid_per_type = get_paid_per_encounter_by_encounter_type(conn, year).fillna('null')
+
+encounter_groups = outlier_encouter_group_data["ENCOUNTER_GROUP"].unique()
 
 color_map = {
     "null": "#D3D3D3",
@@ -53,10 +60,10 @@ encounter_group_fig = make_subplots(
 # Bar 1: PMPM
 encounter_group_fig.add_trace(
     go.Bar(
-        x=pmpm_group["PMPM"],
-        y=pmpm_group["ENCOUNTER_GROUP"],
-        marker_color=get_colors_for_df(pmpm_group),
-        text=[f"${int(round(x)):,}" for x in pmpm_group["PMPM"]],
+        x=outlier_encouter_group_data["PMPM"],
+        y=outlier_encouter_group_data["ENCOUNTER_GROUP"],
+        marker_color=get_colors_for_df(outlier_encouter_group_data),
+        text=[f"${int(round(x)):,}" for x in outlier_encouter_group_data["PMPM"]],
         textposition='outside',
         cliponaxis=False,
         orientation='h',
@@ -65,7 +72,7 @@ encounter_group_fig.add_trace(
             "<b>Encounter Group:</b> %{customdata[0]}<br>" +
             "<b>Paid PMPM:</b> $%{x:,.0f}<extra></extra>"
         ),
-        customdata=pmpm_group[["ENCOUNTER_GROUP"]].values
+        customdata=outlier_encouter_group_data[["ENCOUNTER_GROUP"]].values
     ),
     row=1, col=1
 )
@@ -73,10 +80,10 @@ encounter_group_fig.add_trace(
 # Bar 2: Encounters per 1000
 encounter_group_fig.add_trace(
     go.Bar(
-        x=per_1000_group["ENCOUNTERS_PER_1000"],
-        y=per_1000_group["ENCOUNTER_GROUP"],
-        marker_color=get_colors_for_df(per_1000_group),
-        text=[f"{int(round(x)):,}" for x in per_1000_group["ENCOUNTERS_PER_1000"]],
+        x=outlier_encouter_group_data["ENCOUNTERS_PER_1000"],
+        y=outlier_encouter_group_data["ENCOUNTER_GROUP"],
+        marker_color=get_colors_for_df(outlier_encouter_group_data),
+        text=[f"{int(round(x)):,}" for x in outlier_encouter_group_data["ENCOUNTERS_PER_1000"]],
         textposition='outside',
         cliponaxis=False,
         orientation='h',
@@ -85,7 +92,7 @@ encounter_group_fig.add_trace(
             "<b>Encounter Group:</b> %{customdata[0]}<br>" +
             "<b>Encounters Per 1000:</b> %{x:,.0f}<extra></extra>"
         ),
-        customdata=per_1000_group[["ENCOUNTER_GROUP"]].values
+        customdata=outlier_encouter_group_data[["ENCOUNTER_GROUP"]].values
     ),
     row=1, col=2
 )
@@ -93,10 +100,10 @@ encounter_group_fig.add_trace(
 # Bar 3: Paid per Encounter
 encounter_group_fig.add_trace(
     go.Bar(
-        x=paid_per_group["PAID_PER_ENCOUNTER"],
-        y=paid_per_group["ENCOUNTER_GROUP"],
-        marker_color=get_colors_for_df(paid_per_group),
-        text=[f"${int(round(x)):,}" for x in paid_per_group["PAID_PER_ENCOUNTER"]],
+        x=outlier_encouter_group_data["PAID_PER_ENCOUNTER"],
+        y=outlier_encouter_group_data["ENCOUNTER_GROUP"],
+        marker_color=get_colors_for_df(outlier_encouter_group_data),
+        text=[f"${int(round(x)):,}" for x in outlier_encouter_group_data["PAID_PER_ENCOUNTER"]],
         textposition='outside',
         cliponaxis=False,
         orientation='h',
@@ -105,7 +112,7 @@ encounter_group_fig.add_trace(
             "<b>Encounter Group:</b> %{customdata[0]}<br>" +
             "<b>Paid Per Encounter:</b> $%{x:,.0f}<extra></extra>"
         ),
-        customdata=paid_per_group[["ENCOUNTER_GROUP"]].values
+        customdata=outlier_encouter_group_data[["ENCOUNTER_GROUP"]].values
     ),
     row=1, col=3
 )
@@ -134,10 +141,10 @@ encounter_type_fig = make_subplots(
 # Bar 1: PMPM
 encounter_type_fig.add_trace(
     go.Bar(
-        x=pmpm_type["PMPM"],
-        y=pmpm_type["ENCOUNTER_TYPE"],
-        marker_color=get_colors_for_df(pmpm_type),
-        text=[f"${int(round(x)):,}" for x in pmpm_type["PMPM"]],
+        x=outlier_encouter_type_data["PMPM"],
+        y=outlier_encouter_type_data["ENCOUNTER_TYPE"],
+        marker_color=get_colors_for_df(outlier_encouter_type_data),
+        text=[f"${int(round(x)):,}" for x in outlier_encouter_type_data["PMPM"]],
         textposition='outside',
         cliponaxis=False,
         orientation='h',
@@ -147,7 +154,7 @@ encounter_type_fig.add_trace(
             "<b>Encounter Type:</b> %{y}<br>" +
             "<b>Paid PMPM:</b> $%{x:,.0f}<extra></extra>"
         ),
-        customdata=pmpm_type[["ENCOUNTER_GROUP"]].values
+        customdata=outlier_encouter_type_data[["ENCOUNTER_GROUP"]].values
     ),
     row=1, col=1
 )
@@ -155,10 +162,10 @@ encounter_type_fig.add_trace(
 # Bar 2: Encounters per 1000
 encounter_type_fig.add_trace(
     go.Bar(
-        x=per_1000_type["ENCOUNTERS_PER_1000"],
-        y=per_1000_type["ENCOUNTER_TYPE"],
-        marker_color=get_colors_for_df(per_1000_type),
-        text=[f"{int(round(x)):,}" for x in per_1000_type["ENCOUNTERS_PER_1000"]],
+        x=outlier_encouter_type_data["ENCOUNTERS_PER_1000"],
+        y=outlier_encouter_type_data["ENCOUNTER_TYPE"],
+        marker_color=get_colors_for_df(outlier_encouter_type_data),
+        text=[f"{int(round(x)):,}" for x in outlier_encouter_type_data["ENCOUNTERS_PER_1000"]],
         textposition='outside',
         cliponaxis=False,
         orientation='h',
@@ -168,7 +175,7 @@ encounter_type_fig.add_trace(
             "<b>Encounter Type:</b> %{y}<br>" +
             "<b>Encounters Per 1000:</b> %{x:,.0f}<extra></extra>"
         ),
-        customdata=per_1000_type[["ENCOUNTER_GROUP"]].values
+        customdata=outlier_encouter_type_data[["ENCOUNTER_GROUP"]].values
     ),
     row=1, col=2
 )
@@ -176,10 +183,10 @@ encounter_type_fig.add_trace(
 # Bar 3: Paid per Encounter
 encounter_type_fig.add_trace(
     go.Bar(
-        x=paid_per_type["PAID_PER_ENCOUNTER"],
-        y=paid_per_type["ENCOUNTER_TYPE"],
-        marker_color=get_colors_for_df(paid_per_type),
-         text=[f"${int(round(x)):,}" for x in paid_per_type["PAID_PER_ENCOUNTER"]],
+        x=outlier_encouter_type_data["PAID_PER_ENCOUNTER"],
+        y=outlier_encouter_type_data["ENCOUNTER_TYPE"],
+        marker_color=get_colors_for_df(outlier_encouter_type_data),
+         text=[f"${int(round(x)):,}" for x in outlier_encouter_type_data["PAID_PER_ENCOUNTER"]],
         textposition='outside',
         cliponaxis=False,
         orientation='h',
@@ -189,7 +196,7 @@ encounter_type_fig.add_trace(
             "<b>Encounter Type:</b> %{y}<br>" +
             "<b>Paid Per Encounter:</b> $%{x:,.0f}<extra></extra>"
         ),
-        customdata=paid_per_type[["ENCOUNTER_GROUP"]].values
+        customdata=outlier_encouter_type_data[["ENCOUNTER_GROUP"]].values
     ),
     row=1, col=3
 )

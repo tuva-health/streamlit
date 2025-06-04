@@ -23,7 +23,8 @@ from utils import (
 from shared import path_utils
 from csv_data import (
     get_metrics_data_csv,
-    get_outlier_claims_data_csv,
+    get_outlier_claims_total_paid_csv,
+    get_outlier_claims_total_encounters_csv,
     get_mean_paid_csv,
     get_v24_risk_score_csv,
     get_outlier_population_by_race_csv,
@@ -38,15 +39,14 @@ def display_metrics(avg_hcc_risk_score, year):
     """Display summary metrics in columns."""
    
     metrics_data = get_metrics_data_csv(year)
-    claims_data = get_outlier_claims_data_csv(year)
+    total_paid = get_outlier_claims_total_paid_csv(year)
     mean_paid = get_mean_paid_csv(year)
 
     # Extract and sanitize values
     total_population = metrics_data.get("TOTAL_COUNT", 0)
     female_count = metrics_data.get("FEMALE_COUNT", 0)
     mean_age = metrics_data.get("MEAN_AGE", 0)
-    total_paid = claims_data.get("TOTAL_PAID", 0.0)
-    total_encounters = claims_data.get("TOTAL_ENCOUNTERS", 0)
+    total_encounters = get_outlier_claims_total_encounters_csv(year)
 
     # Compute derived metrics safely
     percent_female = (female_count / total_population) * 100 if total_population else 0.0
@@ -125,9 +125,9 @@ def plot_bar_chart(df, x, y, title, height=260):
 def plot_risk_scores(risk_scores):
     """Plot risk scores distribution."""
     # Calculate min, median, and max
-    min_val = risk_scores.get("HCC_RISK_MIN", 0.0)
-    median_val = risk_scores.get("HCC_RISK_MEDIAN", 0.0)
-    max_val = risk_scores.get("HCC_RISK_MAX", 0.0)
+    min_val = risk_scores.get("V24_RISK_MIN", 0.0)
+    median_val = risk_scores.get("V24_RISK_MEDIAN", 0.0)
+    max_val = risk_scores.get("V24_RISK_MAX", 0.0)
 
     # Create a custom box plot showing only min, median, and max
     fig = go.Figure()
@@ -164,7 +164,7 @@ def main():
     st.markdown(
         f"This dashboard presents key metrics and visualizations for outlier cost drivers in the year {year}."
     )
-    avg_hcc_risk_score = v24_risk_scores.get("HCC_RISK_MEAN", 0.0)
+    avg_hcc_risk_score = v24_risk_scores.get("V24_RISK_MEAN", 0.0)
     display_metrics(avg_hcc_risk_score, year)
 
     with st.container():
