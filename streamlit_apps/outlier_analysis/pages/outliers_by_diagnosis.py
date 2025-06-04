@@ -3,9 +3,14 @@ from pathlib import Path
 import streamlit as st
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from data import (
-    get_pmpm_by_diagnosis,
-    get_pmpm_by_diagnosis_category,
+# from snowflake_data import (
+#     get_pmpm_by_diagnosis,
+#     get_pmpm_by_diagnosis_category,
+# )
+
+from csv_data import (
+    get_pmpm_by_diagnosis_category_csv,
+    get_pmpm_by_diagnosis_csv
 )
 
 # Add the repo root (analytics/) to sys.path so we can import shared modules
@@ -17,17 +22,21 @@ path_utils.add_repo_to_path(levels_up=3)
 conn = st.connection("snowflake")
 year = st.session_state.get("page_selector") if "page_selector" in st.session_state else None
 
-pmpm_diagnosis_category = get_pmpm_by_diagnosis_category(conn, year)
-pmpm_diagnosis = get_pmpm_by_diagnosis(conn, year)
+# pmpm_diagnosis_category = get_pmpm_by_diagnosis_category(conn, year)
+# pmpm_diagnosis = get_pmpm_by_diagnosis(conn, year)
+
+# Use of local CSV files instead of Snowflake queries
+diagnosis_category_data = get_pmpm_by_diagnosis_category_csv(year)
+diagnosis_data = get_pmpm_by_diagnosis_csv(year)
 
 def truncate_label(label, max_length=30):
     return str(label) if len(str(label)) <= max_length else str(label)[:max_length] + "..."
 
-truncated_category_labels = [truncate_label(label, 40) for label in pmpm_diagnosis_category["DX_CCSR_CATEGORY2"]]
-full_category_labels = pmpm_diagnosis_category["DX_CCSR_CATEGORY2"].tolist()
+truncated_category_labels = [truncate_label(label, 40) for label in diagnosis_category_data["DX_CCSR_CATEGORY2"]]
+full_category_labels = diagnosis_category_data["DX_CCSR_CATEGORY2"].tolist()
 
-truncated_labels = [truncate_label(label, 40) for label in pmpm_diagnosis["DX_DESCRIPTION"]]
-full_labels = pmpm_diagnosis["DX_DESCRIPTION"].tolist()
+truncated_labels = [truncate_label(label, 40) for label in diagnosis_data["DX_DESCRIPTION"]]
+full_labels = diagnosis_data["DX_DESCRIPTION"].tolist()
 
 st.markdown(
     """
@@ -56,14 +65,14 @@ diagnosis_category_fig = make_subplots(
 # Bar 1: % of Paid PMPM
 diagnosis_category_fig.add_trace(
     go.Bar(
-        x=pmpm_diagnosis_category["PERCENT_OF_TOTAL_PMPM"],
-        y=pmpm_diagnosis_category["DX_CCSR_CATEGORY2"],
-        text=[f"{x:.1f} %" for x in pmpm_diagnosis_category["PERCENT_OF_TOTAL_PMPM"]],
+        x=diagnosis_category_data["PERCENT_OF_TOTAL_PMPM"],
+        y=diagnosis_category_data["DX_CCSR_CATEGORY2"],
+        text=[f"{x:.1f} %" for x in diagnosis_category_data["PERCENT_OF_TOTAL_PMPM"]],
         textposition='outside',
         cliponaxis=False,
         orientation='h',
         showlegend=False,
-        customdata=pmpm_diagnosis_category["DX_CCSR_CATEGORY2"],
+        customdata=diagnosis_category_data["DX_CCSR_CATEGORY2"],
         hovertemplate="<b>%{customdata}</b><br>PMPM: %{x:.1f}%<extra></extra>",
     ),
     row=1, col=1
@@ -72,14 +81,14 @@ diagnosis_category_fig.add_trace(
 # Bar 2: Cumulative Paid PMPM
 diagnosis_category_fig.add_trace(
     go.Bar(
-        x=pmpm_diagnosis_category["CUMULATIVE_PMPM"],
-        y=pmpm_diagnosis_category["DX_CCSR_CATEGORY2"],
-        text=[f"${int(round(x)):,}" for x in pmpm_diagnosis_category["CUMULATIVE_PMPM"]],
+        x=diagnosis_category_data["CUMULATIVE_PMPM"],
+        y=diagnosis_category_data["DX_CCSR_CATEGORY2"],
+        text=[f"${int(round(x)):,}" for x in diagnosis_category_data["CUMULATIVE_PMPM"]],
         textposition='outside',
         cliponaxis=False,
         orientation='h',
         showlegend=False,
-        customdata=pmpm_diagnosis_category["DX_CCSR_CATEGORY2"],
+        customdata=diagnosis_category_data["DX_CCSR_CATEGORY2"],
         hovertemplate="<b>%{customdata}</b><br>Cumulative PMPM: $%{x:,.0f}<extra></extra>",
     ),
     row=1, col=2
@@ -121,14 +130,14 @@ diagnosis_fig = make_subplots(
 # Bar 1: % of Paid PMPM
 diagnosis_fig.add_trace(
     go.Bar(
-        x=pmpm_diagnosis["PERCENT_OF_TOTAL_PMPM"],
-        y=pmpm_diagnosis["DX_DESCRIPTION"],
-        text=[f"{x:.1f}" for x in pmpm_diagnosis["PERCENT_OF_TOTAL_PMPM"]],
+        x=diagnosis_data["PERCENT_OF_TOTAL_PMPM"],
+        y=diagnosis_data["DX_DESCRIPTION"],
+        text=[f"{x:.1f}" for x in diagnosis_data["PERCENT_OF_TOTAL_PMPM"]],
         textposition='outside',
         cliponaxis=False,
         orientation='h',
         showlegend=False,
-        customdata=pmpm_diagnosis["DX_DESCRIPTION"],
+        customdata=diagnosis_data["DX_DESCRIPTION"],
         hovertemplate="<b>%{customdata}</b><br>PMPM: %{x:.1f}%<extra></extra>",
     ),
     row=1, col=1
@@ -137,14 +146,14 @@ diagnosis_fig.add_trace(
 # Bar 2: Cumulative Paid PMPM
 diagnosis_fig.add_trace(
     go.Bar(
-        x=pmpm_diagnosis["CUMULATIVE_PMPM"],
-        y=pmpm_diagnosis["DX_DESCRIPTION"],
-        text=[f"${int(round(x)):,}" for x in pmpm_diagnosis["CUMULATIVE_PMPM"]],
+        x=diagnosis_data["CUMULATIVE_PMPM"],
+        y=diagnosis_data["DX_DESCRIPTION"],
+        text=[f"${int(round(x)):,}" for x in diagnosis_data["CUMULATIVE_PMPM"]],
         textposition='outside',
         cliponaxis=False,
         orientation='h',
         showlegend=False,
-        customdata=pmpm_diagnosis["DX_DESCRIPTION"],
+        customdata=diagnosis_data["DX_DESCRIPTION"],
         hovertemplate="<b>%{customdata}</b><br>Cumulative PMPM: $%{x:,.0f}<extra></extra>",
     ),
     row=1, col=2
