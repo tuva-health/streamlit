@@ -120,7 +120,7 @@ def get_outlier_population_by_state_csv(selected_year):
         
     return population_by_state
 
-# OUTLIERS BY ENCOUNTER
+# OUTLIERS BY ENCOUNTER  #
 
 @st.cache_data
 def get_member_count(year):
@@ -280,5 +280,65 @@ def get_pmpm_and_encounters_by_type_csv(selected_year):
     }
 
     result = pd.concat([result, pd.DataFrame([grand_total])], ignore_index=True).dropna(subset=['ENCOUNTER_GROUP'])
+    result = result.sort_values(by='PMPM', ascending=True, ignore_index=True)
+    return result
+
+
+# OUTLIERS BY Diagnosis  #
+
+@st.cache_data
+def get_pmpm_by_diagnosis_category_csv(selected_year):
+    """Get PMPM by diagnosis category for the selected year."""
+
+    member_count = get_member_count(selected_year)
+    mask = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
+    filtered = outlier_claims_agg_data[mask]
+    filtered["DX_CCSR_CATEGORY2"] = filtered["DX_CCSR_CATEGORY2"].fillna('null')
+    if member_count == 0 or filtered.empty:
+        return pd.DataFrame(columns=['DX_CCSR_CATEGORY2', 'PMPM', 'CUMULATIVE_PMPM', 'PERCENT_OF_TOTAL_PMPM'])
+        
+    pmpm_df = (
+        filtered
+        .groupby('DX_CCSR_CATEGORY2', as_index=False)['PAID_AMOUNT']
+        .sum()
+        .assign(PMPM=lambda df: df['PAID_AMOUNT'] / member_count)
+        .assign(
+            PMPM=lambda df: df['PMPM'].replace([float('inf'), -float('inf')], 0.0)
+        )
+        .assign(PERCENT_OF_TOTAL_PMPM=lambda df: (df['PMPM'] / df['PMPM'].sum()) * 100)
+        .sort_values(by='PMPM', ascending=False,  ignore_index=True)
+        [['DX_CCSR_CATEGORY2', 'PMPM', 'PERCENT_OF_TOTAL_PMPM']]
+    )
+
+    result = (pmpm_df.assign(CUMULATIVE_PMPM=lambda df: df['PMPM'].cumsum())
+              [['DX_CCSR_CATEGORY2', 'PMPM', 'CUMULATIVE_PMPM', 'PERCENT_OF_TOTAL_PMPM']])
+    result = result.sort_values(by='PMPM', ascending=True, ignore_index=True)
+    return result
+
+@st.cache_data
+def get_pmpm_by_diagnosis_csv(selected_year):
+    """Get PMPM by diagnosis for the selected year."""
+    member_count = get_member_count(selected_year)
+    mask = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
+    filtered = outlier_claims_agg_data[mask]
+    filtered["DX_DESCRIPTION"] = filtered["DX_DESCRIPTION"].fillna('null')
+    if member_count == 0 or filtered.empty:
+        return pd.DataFrame(columns=['DX_DESCRIPTION', 'PMPM', 'CUMULATIVE_PMPM', 'PERCENT_OF_TOTAL_PMPM'])
+    
+    pmpm_df = (
+        filtered
+        .groupby('DX_DESCRIPTION', as_index=False)['PAID_AMOUNT']
+        .sum()
+        .assign(PMPM=lambda df: df['PAID_AMOUNT'] / member_count)
+        .assign(
+            PMPM=lambda df: df['PMPM'].replace([float('inf'), -float('inf')], 0.0)
+        )
+        .assign(PERCENT_OF_TOTAL_PMPM=lambda df: (df['PMPM'] / df['PMPM'].sum()) * 100)
+        .sort_values(by='PMPM', ascending=False, ignore_index=True)
+        [['DX_DESCRIPTION', 'PMPM', 'PERCENT_OF_TOTAL_PMPM']]
+    )
+
+    result = (pmpm_df.assign(CUMULATIVE_PMPM=lambda df: df['PMPM'].cumsum())
+              [['DX_DESCRIPTION', 'PMPM', 'CUMULATIVE_PMPM', 'PERCENT_OF_TOTAL_PMPM']])
     result = result.sort_values(by='PMPM', ascending=True, ignore_index=True)
     return result
