@@ -3,7 +3,7 @@ from pathlib import Path
 import streamlit as st
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from data import (
+from snowflake_data import (
     get_pmpm_by_diagnosis,
     get_pmpm_by_diagnosis_category,
 )
