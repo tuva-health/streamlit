@@ -7,7 +7,6 @@ This is a ready-to-run **Streamlit app** that uses Tuva synthetic data to visual
 ## 📋 What This Template Includes
 
 - ✅ **Multipage Streamlit layout** with pages in the `pages/` folder
-- ✅ **Snowflake integration** using `.streamlit/secrets.toml`
 - ✅ **Visualizations** using Plotly and pandas
 - ✅ **Custom styling** via Streamlit’s `markdown()` injection
 
@@ -40,31 +39,13 @@ This is a ready-to-run **Streamlit app** that uses Tuva synthetic data to visual
    pip install -r requirements.txt
    ```
 
-3. **Set up Snowflake credentials** by creating a file:
-
-   ```
-   .streamlit/secrets.toml
-   ```
-
-   Example contents:
-
-   ```toml
-   [snowflake]
-   user = "your_username"
-   account = "your_account"
-   warehouse = "your_warehouse"
-   database = "your_database"
-   schema = "your_schema"
-   authenticator = "externalbrowser"
-   ```
-
-4. **Run the app**:
+3. **Run the app**:
 
    ```bash
    streamlit run app.py
    ```
 
-5. The app will open in your browser at [http://localhost:8501](http://localhost:8501)
+4. The app will open in your browser at [http://localhost:8501](http://localhost:8501)
 
 ---
 
@@ -90,7 +71,7 @@ outlier_analysis/
 ├── sql/                     # SQL queries to create required tables for the CSVs
 │   └── outlier_queries.sql
 ├── requirements.txt           # Python dependencies for this app
-└── .streamlit/                # Streamlit config and secrets
+└── .streamlit/                # Streamlit config and secrets if required
     └── config.toml
     └── secrets.toml (you create this)
 ```
@@ -127,6 +108,3 @@ If you'd like to run the Streamlit Outlier Analysis App using your **own data**,
 
    ```bash
    streamlit run app.py
-
----
-

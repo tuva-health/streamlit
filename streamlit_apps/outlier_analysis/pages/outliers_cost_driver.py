@@ -86,8 +86,8 @@ def display_metrics(avg_hcc_risk_score, year):
             All beneficiaries with annual claim costs > 2 std dev from mean (${mean_paid:,.2f})
 
             
-            **Total Members:** {total_outlier_members}  
-            **Total Outlier Members:** {total_members}  
+            **Total Members:** {total_members}  
+            **Total Outlier Members:** {total_outlier_members}  
             **Total Outlier Percentage:** {total_outlier_members / total_members * 100:,.2f}%
             """
         )
@@ -136,9 +136,9 @@ def plot_bar_chart(df, x, y, title, height=260):
 def plot_risk_scores(risk_scores):
     """Plot risk scores distribution."""
     # Calculate min, median, and max
-    min_val = risk_scores.get("HCC_RISK_MIN", 0.0)
-    median_val = risk_scores.get("HCC_RISK_MEDIAN", 0.0)
-    max_val = risk_scores.get("HCC_RISK_MAX", 0.0)
+    min_val = risk_scores.get("V24_RISK_MIN", 0.0)
+    median_val = risk_scores.get("V24_RISK_MEDIAN", 0.0)
+    max_val = risk_scores.get("V24_RISK_MAX", 0.0)
 
     # Create a custom box plot showing only min, median, and max
     fig = go.Figure()
@@ -175,7 +175,7 @@ def main():
     st.markdown(
         f"This dashboard presents key metrics and visualizations for outlier cost drivers in the year {year}."
     )
-    avg_hcc_risk_score = v24_risk_scores.get("HCC_RISK_MEAN", 0.0)
+    avg_hcc_risk_score = v24_risk_scores.get("V24_RISK_MEAN", 0.0)
     display_metrics(avg_hcc_risk_score, year)
 
     with st.container():
