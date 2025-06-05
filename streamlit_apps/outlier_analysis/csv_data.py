@@ -1,4 +1,5 @@
 import streamlit as st
+import numpy as np
 import pandas as pd
 
 
@@ -20,7 +21,7 @@ outlier_member_months_data = load_data(outlier_member_path)
 
 def get_year_list():
     """Get the list of years available in the dataset."""
-    return sorted(outlier_member_months_data['YEAR'].unique().tolist())
+    return sorted(outlier_member_months_data['YEAR'].unique().tolist(), reverse=True)
 
 @st.cache_data
 def get_member_count(year):
@@ -112,7 +113,7 @@ def get_outlier_population_by_state_csv(selected_year):
         
     return population_by_state
 
-# OUTLIERS BY ENCOUNTER  #
+# OUTLIERS BY ENCOUNTER #
 
 @st.cache_data
 def get_encounter_count(year):
@@ -126,71 +127,43 @@ def get_encounter_count(year):
 
 @st.cache_data
 def get_pmpm_and_encounters_by_group_csv(selected_year):
-    """Get PMPM and ENCOUNTERS_PER_1000 by encounter group for the selected year."""
-
+    """Get PMPM and ENCOUNTERS_PER_1000 and PAID_PER_ENCOUNTER by encounter group for the selected year."""
     member_count = get_member_count(selected_year)
     encounter_count = get_encounter_count(selected_year)
-    mask = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
-    filtered = outlier_claims_agg_data[mask]
+    
+    df_by_year = outlier_claims_agg_data[outlier_claims_agg_data['INCR_YEAR'].eq(selected_year)]
 
-    if member_count == 0 or filtered.empty:
+    if member_count == 0 or df_by_year.empty:
         return pd.DataFrame(columns=['ENCOUNTER_GROUP', 'PMPM', 'ENCOUNTERS_PER_1000', 'PAID_PER_ENCOUNTER'])
-    filtered["ENCOUNTER_GROUP"] = filtered["ENCOUNTER_GROUP"].fillna('null')
     
-    grouped_encounter_counts = (
-        filtered
-        .groupby('ENCOUNTER_GROUP')['ENCOUNTER_ID']
-        .nunique()
-        .reset_index(name='ENCOUNTER_COUNT')
-    )
-    merged_data = pd.merge(filtered, grouped_encounter_counts, on='ENCOUNTER_GROUP')
-    
-    # Grouping and calculating PMPM
-    pmpm_df = (
-        merged_data
-        .groupby('ENCOUNTER_GROUP', as_index=False)['PAID_AMOUNT']
-        .sum()
-        .assign(PMPM=lambda df: df['PAID_AMOUNT'] / member_count)
-        [['ENCOUNTER_GROUP', 'PMPM', 'PAID_AMOUNT']]
-    )
-
-
-    # Grouping and calculating ENCOUNTERS_PER_1000
-    encounter_per_1000_df = (
-        filtered
-        .groupby('ENCOUNTER_GROUP', as_index=False)['ENCOUNTER_ID']
-        .nunique()
-        .assign(ENCOUNTERS_PER_1000=lambda df: df['ENCOUNTER_ID'] * 12000.0 / member_count)
-        [['ENCOUNTER_GROUP', 'ENCOUNTERS_PER_1000']]
-    )
-
-    #  Grouping and calculating PAID_PER_ENCOUNTER
-    paid_per_encounter_per_group_df = (
-        merged_data
+    df_by_year["ENCOUNTER_GROUP"] = df_by_year["ENCOUNTER_GROUP"].fillna('null')
+   
+    combined_df = (
+        df_by_year
         .groupby('ENCOUNTER_GROUP', as_index=False)
-        .agg({'PAID_AMOUNT': 'sum', 'ENCOUNTER_ID': 'nunique'})
-        .rename(columns={'ENCOUNTER_ID': 'ENCOUNTER_COUNT'})
-        .assign(PAID_PER_ENCOUNTER=lambda df: df['PAID_AMOUNT'] / df['ENCOUNTER_COUNT'])
-        .assign(
-            PAID_PER_ENCOUNTER=lambda df: df['PAID_PER_ENCOUNTER'].replace([float('inf'), -float('inf')], 0.0)
+        .agg(
+            PAID_AMOUNT=('PAID_AMOUNT', 'sum'),
+            ENCOUNTER_COUNT=('ENCOUNTER_ID', 'nunique')
         )
-        [['ENCOUNTER_GROUP', 'PAID_PER_ENCOUNTER']]
+        .assign(
+            PMPM=lambda df: df['PAID_AMOUNT'] / member_count,
+            ENCOUNTERS_PER_1000=lambda df: df['ENCOUNTER_COUNT'] * 12000.0 / member_count,
+            PAID_PER_ENCOUNTER=lambda df: np.where(
+                df['ENCOUNTER_COUNT'] == 0, 0.0, df['PAID_AMOUNT'] / df['ENCOUNTER_COUNT']
+            )
+        )
+        [['ENCOUNTER_GROUP', 'PMPM', 'PAID_AMOUNT', 'ENCOUNTERS_PER_1000', 'PAID_PER_ENCOUNTER']]
     )
-
-
-    # Merge encounter per 1000, PMPM, and paid per encounter
-    result = pmpm_df.merge(encounter_per_1000_df, on='ENCOUNTER_GROUP', how='outer') \
-                    .merge(paid_per_encounter_per_group_df, on='ENCOUNTER_GROUP', how='outer')
 
     # Add Grand Total row
     grand_total = {
         'ENCOUNTER_GROUP': 'Grand Total',
-        'PMPM': result['PMPM'].sum(skipna=True),
-        'ENCOUNTERS_PER_1000': result['ENCOUNTERS_PER_1000'].sum(skipna=True),
-        'PAID_PER_ENCOUNTER': result['PAID_AMOUNT'].sum(skipna=True) / encounter_count
+        'PMPM': combined_df['PMPM'].sum(skipna=True),
+        'ENCOUNTERS_PER_1000': combined_df['ENCOUNTERS_PER_1000'].sum(skipna=True),
+        'PAID_PER_ENCOUNTER': combined_df['PAID_AMOUNT'].sum(skipna=True) / encounter_count if encounter_count else 0.0
     }
 
-    result = pd.concat([result, pd.DataFrame([grand_total])], ignore_index=True).dropna(subset=['ENCOUNTER_GROUP'])
+    result = pd.concat([combined_df, pd.DataFrame([grand_total])], ignore_index=True).dropna(subset=['ENCOUNTER_GROUP'])
     result = result.sort_values(by='PMPM', ascending=True, ignore_index=True)
 
     return result
@@ -201,73 +174,46 @@ def get_pmpm_and_encounters_by_type_csv(selected_year):
     """Get PMPM and ENCOUNTERS_PER_1000 by encounter type for the selected year."""
     member_count = get_member_count(selected_year)
     encounter_count = get_encounter_count(selected_year)
-    mask = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
-    filtered = outlier_claims_agg_data[mask]
-    if member_count == 0 or filtered.empty:
+
+    df_by_year = outlier_claims_agg_data[outlier_claims_agg_data['INCR_YEAR'].eq(selected_year)]
+
+    if member_count == 0 or df_by_year.empty:
         return pd.DataFrame(columns=['ENCOUNTER_GROUP', 'ENCOUNTER_TYPE', 'PAID_AMOUNT', 'PMPM', 'ENCOUNTERS_PER_1000', 'PAID_PER_ENCOUNTER'])
     
-    filtered["ENCOUNTER_GROUP"] = filtered["ENCOUNTER_GROUP"].fillna('null')
-    filtered["ENCOUNTER_TYPE"] = filtered["ENCOUNTER_TYPE"].fillna('null')
+    df_by_year.fillna({'ENCOUNTER_GROUP': 'null', 'ENCOUNTER_TYPE': 'null'}, inplace=True)
 
-    # Calcuate the number of encounters per group and type
-    grouped_encounter_counts = (
-        filtered
-        .groupby(['ENCOUNTER_GROUP', 'ENCOUNTER_TYPE'])['ENCOUNTER_ID']
-        .nunique()
-        .reset_index(name='ENCOUNTER_COUNT')
-    )
-
-    merged_data = pd.merge(filtered, grouped_encounter_counts, on=['ENCOUNTER_GROUP', 'ENCOUNTER_TYPE'])
-    
-    # Grouping and calculating PMPM
-    pmpm_df = (
-        merged_data
-        .groupby(['ENCOUNTER_GROUP', 'ENCOUNTER_TYPE'], as_index=False)['PAID_AMOUNT']
-        .sum()
-        .assign(PMPM=lambda df: df['PAID_AMOUNT'] / member_count)
-        [['ENCOUNTER_GROUP', 'ENCOUNTER_TYPE', 'PAID_AMOUNT', 'PMPM']]
-    )
-
-    # Grouping and calculating ENCOUNTERS_PER_1000
-    encounter_per_1000_df = (
-        filtered
-        .groupby(['ENCOUNTER_GROUP', 'ENCOUNTER_TYPE'], as_index=False)['ENCOUNTER_ID']
-        .nunique()
-        .assign(ENCOUNTERS_PER_1000=lambda df: df['ENCOUNTER_ID'] * 12000.0 / member_count)
-        [['ENCOUNTER_GROUP', 'ENCOUNTER_TYPE', 'ENCOUNTERS_PER_1000']]
-    )
-
-    #  Grouping and calculating PAID_PER_ENCOUNTER
-    paid_per_encounter_per_group_df = (
-        merged_data
+    combined_df = (
+        df_by_year
         .groupby(['ENCOUNTER_GROUP', 'ENCOUNTER_TYPE'], as_index=False)
-        .agg({'PAID_AMOUNT': 'sum', 'ENCOUNTER_ID': 'nunique'})
-        .rename(columns={'ENCOUNTER_ID': 'ENCOUNTER_COUNT'})
-        .assign(PAID_PER_ENCOUNTER=lambda df: df['PAID_AMOUNT'] / df['ENCOUNTER_COUNT']).assign(
-            PAID_PER_ENCOUNTER=lambda df: df['PAID_PER_ENCOUNTER'].replace([float('inf'), -float('inf')], 0.0)
+        .agg(
+            PAID_AMOUNT=('PAID_AMOUNT', 'sum'),
+            ENCOUNTER_COUNT=('ENCOUNTER_ID', 'nunique')
         )
-        [['ENCOUNTER_GROUP', 'ENCOUNTER_TYPE', 'PAID_PER_ENCOUNTER']]
+        .assign(
+            PMPM=lambda df: df['PAID_AMOUNT'] / member_count,
+            ENCOUNTERS_PER_1000=lambda df: df['ENCOUNTER_COUNT'] * 12000.0 / member_count,
+            PAID_PER_ENCOUNTER=lambda df: np.where(
+                df['ENCOUNTER_COUNT'] == 0, 0.0, df['PAID_AMOUNT'] / df['ENCOUNTER_COUNT']
+            )
+        )
+        [['ENCOUNTER_GROUP', 'ENCOUNTER_TYPE', 'PMPM', 'PAID_AMOUNT', 'ENCOUNTERS_PER_1000', 'PAID_PER_ENCOUNTER']]
     )
-
-    # Merge encounter per 1000, PMPM, and paid per encounter
-    result = pmpm_df.merge(encounter_per_1000_df, on=['ENCOUNTER_TYPE', 'ENCOUNTER_GROUP'], how='outer') \
-                    .merge(paid_per_encounter_per_group_df, on=['ENCOUNTER_TYPE', 'ENCOUNTER_GROUP'], how='outer')
 
     # Add Grand Total row
     grand_total = {
         'ENCOUNTER_GROUP': 'Grand Total',
         'ENCOUNTER_TYPE': 'Grand Total',
-        'PMPM': result['PMPM'].sum(skipna=True),
-        'ENCOUNTERS_PER_1000': result['ENCOUNTERS_PER_1000'].sum(skipna=True),
-        'PAID_PER_ENCOUNTER': result['PAID_AMOUNT'].sum(skipna=True) / encounter_count
+        'PMPM': combined_df['PMPM'].sum(skipna=True),
+        'ENCOUNTERS_PER_1000': combined_df['ENCOUNTERS_PER_1000'].sum(skipna=True),
+        'PAID_PER_ENCOUNTER': combined_df['PAID_AMOUNT'].sum(skipna=True) / encounter_count if encounter_count else 0.0
     }
 
-    result = pd.concat([result, pd.DataFrame([grand_total])], ignore_index=True).dropna(subset=['ENCOUNTER_GROUP'])
+    result = pd.concat([combined_df, pd.DataFrame([grand_total])], ignore_index=True).dropna(subset=['ENCOUNTER_GROUP'])
     result = result.sort_values(by='PMPM', ascending=True, ignore_index=True)
     return result
 
 
-# OUTLIERS BY Diagnosis  #
+# OUTLIERS BY Diagnosis #
 
 
 @st.cache_data
