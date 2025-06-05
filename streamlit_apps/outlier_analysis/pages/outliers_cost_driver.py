@@ -1,4 +1,3 @@
-from decimal import Decimal
 import sys
 from pathlib import Path
 import streamlit as st
@@ -6,27 +5,15 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 sys.path.append(str(Path(__file__).resolve().parents[3]))
-# from snowflake_data import (
-#     get_metrics_data,
-#     get_mean_paid,
-#     get_avg_hcc_risk_score,
-#     get_outlier_claims_data,
-#     get_outlier_population_by_race,
-#     get_outlier_population_by_state,
-#       get_total_members_count,
-#     get_v24_risk_scores
-# )
+
 from utils import (
-    # safe_extract, 
     round_nearest_int, 
     format_large_number
     )
 from shared import path_utils
 from csv_data import (
     get_metrics_data_csv,
-    get_outlier_claims_total_paid_csv,
-    get_outlier_claims_total_encounters_csv,
-    get_mean_paid_csv,
+    get_member_count,
     get_v24_risk_score_csv,
     get_outlier_population_by_race_csv,
     get_outlier_population_by_state_csv
@@ -39,33 +26,27 @@ path_utils.add_repo_to_path(levels_up=3)
 def display_metrics(avg_hcc_risk_score, year):
     """Display summary metrics in columns."""
 
-    # total_members = get_total_members_count(conn, year)
     metrics_data = get_metrics_data_csv(year)
-    total_paid = get_outlier_claims_total_paid_csv(year)
-    mean_paid = get_mean_paid_csv(year)
+    total_outlier_members = get_member_count(year)
 
     # Extract and sanitize values
-    total_members = metrics_data.get("TOTAL_COUNT")
-    total_outlier_members = metrics_data.get("TOTAL_OUTLIER_COUNT", 0)
+    total_members = metrics_data.get("TOTAL_COUNT", 0)
+    total_encounters = metrics_data.get("TOTAL_ENCOUNTERS", 0)
     female_count = metrics_data.get("FEMALE_COUNT", 0)
+    total_paid = metrics_data.get("TOTAL_PAID", 0)
     mean_age = metrics_data.get("MEAN_AGE", 0)
-    total_encounters = get_outlier_claims_total_encounters_csv(year)
+    mean_paid = metrics_data.get("MEAN_PAID", 0)
 
     # Compute derived metrics safely
-    percent_female = (female_count / total_outlier_members) * 100 if total_outlier_members else 0.0
-    encounter_per_1000 = (total_encounters / total_outlier_members) * 12000 if total_outlier_members else 0.0
-    paid_per_encounter = (total_paid / total_encounters) if total_encounters else 0.0
-    paid_pmpm = (total_paid / total_outlier_members) if total_outlier_members else 0.0
-    rounded_mean_age = round_nearest_int(mean_age)
-    rounded_paid_pmpm = f"${round_nearest_int(paid_pmpm)}"
-    rounded_encounter_per_1000 = round_nearest_int(encounter_per_1000)
-    paid_per_encounter = (total_paid / total_encounters) if total_encounters else 0.0
-    paid_per_encounter = f"${paid_per_encounter:,.2f}" if total_encounters else "$0.00"
+    percent_female = (female_count / total_outlier_members) * 100
+    encounter_per_1000 = (total_encounters / total_outlier_members) * 12000
+    paid_per_encounter = (total_paid / total_encounters)
+    paid_pmpm = (total_paid / total_outlier_members)
 
     col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 2, 4], gap="small")
     with col1:
         st.metric("Members", total_outlier_members, border=True)
-        st.metric("Mean Age ", rounded_mean_age, border=True)
+        st.metric("Mean Age ", round_nearest_int(mean_age), border=True)
 
     with col2:
         st.metric("Percent Female", f"{percent_female:.2f}%", border=True)
@@ -73,11 +54,11 @@ def display_metrics(avg_hcc_risk_score, year):
 
     with col3:
         st.metric("Paid Amount", format_large_number(total_paid), border=True)
-        st.metric("Paid PMPM", rounded_paid_pmpm, border=True)
+        st.metric("Paid PMPM", f"${round_nearest_int(paid_pmpm)}", border=True)
 
     with col4:
-        st.metric("Encounters / 1000", rounded_encounter_per_1000, border=True)
-        st.metric("Paid / Encounter", paid_per_encounter, border=True)
+        st.metric("Encounters / 1000", round_nearest_int(encounter_per_1000), border=True)
+        st.metric("Paid / Encounter", f"${paid_per_encounter:,.2f}", border=True)
 
     with col5:
         st.markdown(
@@ -160,30 +141,26 @@ def plot_risk_scores(risk_scores):
     return fig
 
 def main():
-    year = st.session_state.get("page_selector") if "page_selector" in st.session_state else None
-    # try:
-    #     conn = st.connection("snowflake")
-    # except Exception as e:
-    #     st.error(f"Failed to connect to Snowflake: {e}")
-    #     st.stop()
+    year = st.session_state.get("selected_year") if "selected_year" in st.session_state else None
 
     outlier_population_by_state = get_outlier_population_by_state_csv(year)
     outlier_population_by_race = get_outlier_population_by_race_csv(year)
     v24_risk_scores = get_v24_risk_score_csv(year)
+    
     # --- Page Title and Description ---
     st.header("Outlier Cost Driver Dashboard", divider="grey")
     st.markdown(
         f"This dashboard presents key metrics and visualizations for outlier cost drivers in the year {year}."
     )
+    
     avg_hcc_risk_score = v24_risk_scores.get("V24_RISK_MEAN", 0.0)
     display_metrics(avg_hcc_risk_score, year)
 
     with st.container():
         graph1, graph2 = st.columns([1, 1], gap="large")
         with graph1:
-            with st.container():
-                fig = plot_bar_chart(outlier_population_by_state, "PERCENTAGE", "STATE", "Outlier Population by State", 650)
-                st.plotly_chart(fig, use_container_width=True)
+            fig = plot_bar_chart(outlier_population_by_state, "PERCENTAGE", "STATE", "Outlier Population by State", 650)
+            st.plotly_chart(fig, use_container_width=True)
         with graph2:
             fig = plot_bar_chart(outlier_population_by_race, "PERCENTAGE", "RACE", "Outlier Population by Race")
             st.plotly_chart(fig, use_container_width=True)

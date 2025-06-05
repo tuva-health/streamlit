@@ -14,7 +14,7 @@ sys.path.append(str(Path(__file__).resolve().parents[3]))
 from shared import path_utils
 path_utils.add_repo_to_path(levels_up=3)
 
-year = st.session_state.get("page_selector") if "page_selector" in st.session_state else None
+year = st.session_state.get("selected_year") if "selected_year" in st.session_state else None
 
 
 outlier_encouter_group_data = get_pmpm_and_encounters_by_group_csv(year)

@@ -3,11 +3,6 @@ from pathlib import Path
 import streamlit as st
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-# from snowflake_data import (
-#     get_pmpm_by_diagnosis,
-#     get_pmpm_by_diagnosis_category,
-# )
-
 from csv_data import (
     get_pmpm_by_diagnosis_category_csv,
     get_pmpm_by_diagnosis_csv
@@ -19,11 +14,7 @@ sys.path.append(str(Path(__file__).resolve().parents[3]))
 from shared import path_utils
 path_utils.add_repo_to_path(levels_up=3)
 
-# conn = st.connection("snowflake")
-year = st.session_state.get("page_selector") if "page_selector" in st.session_state else None
-
-# pmpm_diagnosis_category = get_pmpm_by_diagnosis_category(conn, year)
-# pmpm_diagnosis = get_pmpm_by_diagnosis(conn, year)
+year = st.session_state.get("selected_year") if "selected_year" in st.session_state else None
 
 # Use of local CSV files instead of Snowflake queries
 diagnosis_category_data = get_pmpm_by_diagnosis_category_csv(year)
@@ -97,12 +88,13 @@ diagnosis_category_fig.add_trace(
 category_count = len(full_category_labels)
 category_height = min(max(60 * category_count, 400), 2000)
 
-diagnosis_category_fig.update_xaxes(showticklabels=False)
-
 diagnosis_category_fig.update_layout(
     height=category_height,
     width=1200,
     margin=dict(l=150, b=10, t=45, r=55),
+    xaxis=dict(
+        showticklabels=False,
+    ),
     yaxis=dict(
         tickmode="array",
         tickvals=full_category_labels,
@@ -164,12 +156,13 @@ diagnosis_fig.add_trace(
 diagnosis_count = len(full_labels)
 diagnosis_height = min(max(60 * diagnosis_count, 400), 3000)
 
-diagnosis_fig.update_xaxes(showticklabels=False)
-
 diagnosis_fig.update_layout(
     height=diagnosis_height,
     width=1200,
     margin=dict(l=150, b=10, t=45, r=55),
+    xaxis=dict(
+        showticklabels=False,
+    ),
     yaxis=dict(
         tickmode="array",
         tickvals=full_labels,

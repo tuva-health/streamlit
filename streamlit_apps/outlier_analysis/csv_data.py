@@ -19,68 +19,56 @@ outlier_claims_agg_data = load_data(agg_claim_path)
 outlier_member_path = "data/outlier_member_months.csv"
 outlier_member_months_data = load_data(outlier_member_path)
 
-# Year list for dropdown selection
-@st.cache_data
 def get_year_list():
+    """Get the list of years available in the dataset."""
     return sorted(outlier_member_months_data['YEAR'].unique().tolist(), reverse=True)
 
 @st.cache_data
+def get_member_count(year):
+    """Get the total number of outlier members for the selected year."""
+    mask = outlier_member_months_data['YEAR'].astype(str) == str(year)
+    member_count = 0
+    if not outlier_member_months_data[mask].empty:
+        member_count = outlier_member_months_data[mask]['MEMBER_ID'].nunique()
+    return member_count
+
+@st.cache_data
 def get_metrics_data_csv(selected_year):
-    """Get the number of member months for the selected year."""
+    """Get the metrics data for the selected year."""
     if selected_year:
         # Convert selected_year to string for comparison
         mask1 = outlier_member_months_data['YEAR'].astype(str) == str(selected_year)
 
-        total_outlier_count = outlier_member_months_data[mask1]['MEMBER_ID'].nunique()
         mean_age = outlier_member_months_data[mask1]['AGE'].mean()
         female_count = outlier_member_months_data[mask1 & (outlier_member_months_data["SEX"] == 'female')]['MEMBER_ID'].nunique()
         
         mask2 = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
         total_count = outlier_claims_agg_data[mask2]['TOTAL_MEMBERS'].iloc[0]
+        total_paid = outlier_claims_agg_data[mask2]['PAID_AMOUNT'].sum()
+        mean_paid = outlier_claims_agg_data[mask2]['MEAN_PAID'].iloc[0]
+        total_encounters = outlier_claims_agg_data[mask2]['ENCOUNTER_ID'].nunique()
+
         return {
             "TOTAL_COUNT": total_count,
-            "TOTAL_OUTLIER_COUNT": total_outlier_count,
+            "TOTAL_ENCOUNTERS": total_encounters,
+            "TOTAL_PAID": total_paid,
+            "MEAN_PAID": mean_paid,
             "MEAN_AGE": mean_age, 
             "FEMALE_COUNT": female_count
             }
     
     return {
         "TOTAL_COUNT": 0, 
+        "TOTAL_ENCOUNTERS": 0,
+        "TOTAL_PAID": 0,
         "MEAN_AGE": 0, 
+        "MEAN_PAID": 0,
         "FEMALE_COUNT": 0
         }
 
-
-@st.cache_data
-def get_outlier_claims_total_paid_csv(selected_year):
-    """Get the total paid amount for the selected year."""
-    mask = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
-    total_paid = 0
-    if not outlier_claims_agg_data[mask].empty:
-        total_paid = outlier_claims_agg_data[mask]['PAID_AMOUNT'].sum()
-    
-    return total_paid
-    
-@st.cache_data
-def get_outlier_claims_total_encounters_csv(selected_year):
-    """Get the total number of encounters for the selected year."""
-    mask = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
-    total_encounters = 0
-    if not outlier_claims_agg_data[mask].empty:
-        total_encounters = outlier_claims_agg_data[mask]['ENCOUNTER_ID'].nunique()
-        
-    return total_encounters
-    
-
-@st.cache_data
-def get_mean_paid_csv(selected_year):
-    """Get the mean paid amount for the selected year."""
-    mask = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
-    return outlier_claims_agg_data[mask]['MEAN_PAID'].iloc[0] if not outlier_claims_agg_data[mask].empty else 0.0
-
 @st.cache_data
 def get_v24_risk_score_csv(selected_year):
-    """Get the average HCC risk score for the selected year."""
+    """Get HCC risk score detail for the selected year."""
     mask = outlier_member_months_data['YEAR'].astype(str) == str(selected_year)
     filtered_data = outlier_member_months_data[mask] if selected_year else pd.DataFrame()
 
@@ -101,7 +89,7 @@ def get_v24_risk_score_csv(selected_year):
 
 @st.cache_data
 def get_outlier_population_by_race_csv(selected_year):
-    """Get the outlier population by population for the selected year."""
+    """Get the outlier population by Race for the selected year."""
     mask = outlier_member_months_data['YEAR'].astype(str) == str(selected_year)
     filtered_data = outlier_member_months_data[(mask) & (outlier_member_months_data["RACE"].notnull())] if selected_year else pd.DataFrame()
     if not filtered_data.empty:
@@ -114,7 +102,7 @@ def get_outlier_population_by_race_csv(selected_year):
 
 @st.cache_data
 def get_outlier_population_by_state_csv(selected_year):
-    """Get the outlier population by population for the selected year."""
+    """Get the outlier population by State for the selected year."""
     mask = outlier_member_months_data['YEAR'].astype(str) == str(selected_year)
     filtered_data = outlier_member_months_data[(mask) & (outlier_member_months_data["STATE"].notnull())] if selected_year else pd.DataFrame()
     if not filtered_data.empty:
@@ -125,16 +113,7 @@ def get_outlier_population_by_state_csv(selected_year):
         
     return population_by_state
 
-# OUTLIERS BY ENCOUNTER
-
-@st.cache_data
-def get_member_count(year):
-    """Get the total number of members for the selected year."""
-    mask = outlier_member_months_data['YEAR'].astype(str) == str(year)
-    member_count = 0
-    if not outlier_member_months_data[mask].empty:
-        member_count = outlier_member_months_data[mask]['MEMBER_ID'].nunique()
-    return member_count
+# OUTLIERS BY ENCOUNTER #
 
 @st.cache_data
 def get_encounter_count(year):
@@ -234,61 +213,76 @@ def get_pmpm_and_encounters_by_type_csv(selected_year):
     return result
 
 
-# OUTLIERS BY Diagnosis
+# OUTLIERS BY Diagnosis #
+
 
 @st.cache_data
 def get_pmpm_by_diagnosis_category_csv(selected_year):
     """Get PMPM by diagnosis category for the selected year."""
 
     member_count = get_member_count(selected_year)
-    mask = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
+    mask = outlier_claims_agg_data["INCR_YEAR"].astype(str) == str(selected_year)
     filtered = outlier_claims_agg_data[mask]
-    filtered["DX_CCSR_CATEGORY2"] = filtered["DX_CCSR_CATEGORY2"].fillna('null')
+
     if member_count == 0 or filtered.empty:
-        return pd.DataFrame(columns=['DX_CCSR_CATEGORY2', 'PMPM', 'CUMULATIVE_PMPM', 'PERCENT_OF_TOTAL_PMPM'])
-        
-    pmpm_df = (
-        filtered
-        .groupby('DX_CCSR_CATEGORY2', as_index=False)['PAID_AMOUNT']
-        .sum()
-        .assign(PMPM=lambda df: df['PAID_AMOUNT'] / member_count)
-        .assign(
-            PMPM=lambda df: df['PMPM'].replace([float('inf'), -float('inf')], 0.0)
+        return pd.DataFrame(
+            columns=[
+                "DX_CCSR_CATEGORY2",
+                "PMPM",
+                "CUMULATIVE_PMPM",
+                "PERCENT_OF_TOTAL_PMPM",
+            ]
         )
-        .assign(PERCENT_OF_TOTAL_PMPM=lambda df: (df['PMPM'] / df['PMPM'].sum()) * 100)
-        .sort_values(by='PMPM', ascending=False,  ignore_index=True)
-        [['DX_CCSR_CATEGORY2', 'PMPM', 'PERCENT_OF_TOTAL_PMPM']]
+
+    filtered["DX_CCSR_CATEGORY2"] = filtered["DX_CCSR_CATEGORY2"].fillna("null")
+    pmpm_df = (
+        filtered.groupby("DX_CCSR_CATEGORY2", as_index=False)["PAID_AMOUNT"]
+        .sum()
+        .assign(PMPM=lambda df: df["PAID_AMOUNT"] / member_count)
+        .assign(PMPM=lambda df: df["PMPM"].replace([float("inf"), -float("inf")], 0.0))
+        .assign(PERCENT_OF_TOTAL_PMPM=lambda df: (df["PMPM"] / df["PMPM"].sum()) * 100)
+        .sort_values(by="PMPM", ascending=False, ignore_index=True)[
+            ["DX_CCSR_CATEGORY2", "PMPM", "PERCENT_OF_TOTAL_PMPM"]
+        ]
     )
 
-    result = (pmpm_df.assign(CUMULATIVE_PMPM=lambda df: df['PMPM'].cumsum())
-              [['DX_CCSR_CATEGORY2', 'PMPM', 'CUMULATIVE_PMPM', 'PERCENT_OF_TOTAL_PMPM']])
-    result = result.sort_values(by='PMPM', ascending=True, ignore_index=True)
+    result = pmpm_df.assign(CUMULATIVE_PMPM=lambda df: df["PMPM"].cumsum())[
+        ["DX_CCSR_CATEGORY2", "PMPM", "CUMULATIVE_PMPM", "PERCENT_OF_TOTAL_PMPM"]
+    ]
+    result = result.sort_values(by="PMPM", ascending=True, ignore_index=True)
     return result
+
 
 @st.cache_data
 def get_pmpm_by_diagnosis_csv(selected_year):
     """Get PMPM by diagnosis for the selected year."""
     member_count = get_member_count(selected_year)
-    mask = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
+    mask = outlier_claims_agg_data["INCR_YEAR"].astype(str) == str(selected_year)
     filtered = outlier_claims_agg_data[mask]
-    filtered["DX_DESCRIPTION"] = filtered["DX_DESCRIPTION"].fillna('null')
+    filtered["DX_DESCRIPTION"] = filtered["DX_DESCRIPTION"].fillna("null")
     if member_count == 0 or filtered.empty:
-        return pd.DataFrame(columns=['DX_DESCRIPTION', 'PMPM', 'CUMULATIVE_PMPM', 'PERCENT_OF_TOTAL_PMPM'])
-    
-    pmpm_df = (
-        filtered
-        .groupby('DX_DESCRIPTION', as_index=False)['PAID_AMOUNT']
-        .sum()
-        .assign(PMPM=lambda df: df['PAID_AMOUNT'] / member_count)
-        .assign(
-            PMPM=lambda df: df['PMPM'].replace([float('inf'), -float('inf')], 0.0)
+        return pd.DataFrame(
+            columns=[
+                "DX_DESCRIPTION",
+                "PMPM",
+                "CUMULATIVE_PMPM",
+                "PERCENT_OF_TOTAL_PMPM",
+            ]
         )
-        .assign(PERCENT_OF_TOTAL_PMPM=lambda df: (df['PMPM'] / df['PMPM'].sum()) * 100)
-        .sort_values(by='PMPM', ascending=False, ignore_index=True)
-        [['DX_DESCRIPTION', 'PMPM', 'PERCENT_OF_TOTAL_PMPM']]
+
+    pmpm_df = (
+        filtered.groupby("DX_DESCRIPTION", as_index=False)["PAID_AMOUNT"]
+        .sum()
+        .assign(PMPM=lambda df: df["PAID_AMOUNT"] / member_count)
+        .assign(PMPM=lambda df: df["PMPM"].replace([float("inf"), -float("inf")], 0.0))
+        .assign(PERCENT_OF_TOTAL_PMPM=lambda df: (df["PMPM"] / df["PMPM"].sum()) * 100)
+        .sort_values(by="PMPM", ascending=False, ignore_index=True)[
+            ["DX_DESCRIPTION", "PMPM", "PERCENT_OF_TOTAL_PMPM"]
+        ]
     )
 
-    result = (pmpm_df.assign(CUMULATIVE_PMPM=lambda df: df['PMPM'].cumsum())
-              [['DX_DESCRIPTION', 'PMPM', 'CUMULATIVE_PMPM', 'PERCENT_OF_TOTAL_PMPM']])
-    result = result.sort_values(by='PMPM', ascending=True, ignore_index=True)
+    result = pmpm_df.assign(CUMULATIVE_PMPM=lambda df: df["PMPM"].cumsum())[
+        ["DX_DESCRIPTION", "PMPM", "CUMULATIVE_PMPM", "PERCENT_OF_TOTAL_PMPM"]
+    ]
+    result = result.sort_values(by="PMPM", ascending=True, ignore_index=True)
     return result
