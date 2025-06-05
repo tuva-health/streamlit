@@ -22,25 +22,7 @@ This is a ready-to-run **Streamlit app template** for analyzing healthcare claim
    cd streamlit_apps/tuva_template
    ```
 
-2. **Activate your virtual environment**:
-
-   #### 💻 macOS/Linux
-   ```bash
-   python3 -m venv .venv
-   source ../../.venv/bin/activate
-   pip install --upgrade pip
-   pip install -r requirements.txt
-   ```
-
-   #### 🪟 Windows
-   ```bash
-   python -m venv .venv
-   ..\.venv\Scripts\activate
-   pip install --upgrade pip
-   pip install -r requirements.txt
-   ```
-
-3. **Set up Snowflake credentials** by creating a file:
+2. **Set up Snowflake credentials** by creating a file:
 
    ```
    .streamlit/secrets.toml
@@ -58,13 +40,40 @@ This is a ready-to-run **Streamlit app template** for analyzing healthcare claim
    authenticator = "externalbrowser"
    ```
 
-4. **Run the app**:
+3. **Ensure that the virtual environment is activated**
+
+   Once activated, you should see the venv name in your terminal prompt like:
+
+   ```bash
+   (venv) $
+   ```
+
+   If you don't see this, it likely means the environment is not activated.
+   To activate it, follow the instructions in the README.md file located in the root folder, or use one of the following commands based on your OS:
+
+   #### 💻 macOS/Linux
+      ```bash
+      python3 -m venv .venv
+      source .venv/bin/activate
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      ```
+
+   #### 🪟 Windows
+      ```bash
+      python -m venv .venv
+      .venv\Scripts\activate
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      ```
+
+3. **Run the app**:
 
    ```bash
    streamlit run app.py
    ```
 
-5. The app will open in your browser at [http://localhost:8501](http://localhost:8501)
+4. The app will open in your browser at [http://localhost:8501](http://localhost:8501)
 
 ---
 
@@ -84,11 +93,9 @@ tuva_template/
 ├── pages/                     # Individual dashboard pages
 │   ├── dashboard.py
 │   └── claim_amount.py
-├── requirements.txt           # Python dependencies for this app
 └── .streamlit/                # Streamlit config and secrets
     └── config.toml
     └── secrets.toml (you create this)
 ```
 
 ---
-

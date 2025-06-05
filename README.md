@@ -21,27 +21,32 @@ analytics/
 │       ├── pages/
 │       │   ├── dashboard.py
 │       │   └── claim_amount.py
-│       ├── .streamlit/      # Config and secrets
-│       │   └── config.toml
-│       └── requirements.txt
+│       └── .streamlit/      # Config and secrets
+│           └── config.toml
 │
-├── .venv/ (optional)        # Virtual environment (not checked into version control)
+├── venv/ (optional)        # Virtual environment (not checked into version control)
+├── requirements.txt         # Python dependencies for this app
 └── README.md                # You're here
 ```
 
 ---
 
-## 🆕 Setting Up a New Streamlit App
+## 🆕 Setting Up a New Streamlit App (Developer Notes)
 
 To create a new app:
 
 1. Create a new folder inside `streamlit_apps/`, e.g. `streamlit_apps/my_new_app/`
+
 2. Inside that folder, add:
-   - `app.py` — your main Streamlit entry point
-   - `requirements.txt` — app-specific dependencies (optional if shared)
-   - `.streamlit/` folder with `config.toml` and `secrets.toml`
-   - (optional) `pages/` subfolder for multipage apps
+   - `app.py` — your main Streamlit entry point  
+   - `requirements.txt` — app-specific dependencies (optional if shared)  
+   - `.streamlit/` folder with:
+     - `config.toml`
+     - `secrets.toml`
+   - *(Optional)* `pages/` subfolder for multipage apps
+
 3. Use shared code from `shared/utils/` (e.g. `helpers.get_table_data()`)
+
 4. Follow the setup instructions below to install and run it locally
 
 ---
@@ -65,23 +70,23 @@ cd analytics
 
 #### 💻 macOS/Linux
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+python3 -m venv venv
+source venv/bin/activate
 pip install --upgrade pip
-pip install -r streamlit_apps/tuva_template/requirements.txt
+pip install -r requirements.txt
 ```
 
 #### 🪟 Windows
 ```bash
-python -m venv .venv
-.venv\Scripts\activate
+python -m venv venv
+venv\Scripts\activate
 pip install --upgrade pip
-pip install -r streamlit_apps/tuva_template/requirements.txt
+pip install -r requirements.txt
 ```
 
 ---
 
-## 🔐 Configure Snowflake Credentials
+## 🔐 Configure Snowflake Credentials (if needed)
 
 Create the following file inside your app folder (e.g. `streamlit_apps/tuva_template/.streamlit/secrets.toml`):
 
