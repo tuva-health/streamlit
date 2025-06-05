@@ -65,7 +65,7 @@ with st.sidebar:
             "Select Year",
             options=year_list,
             index=0,
-            key="page_selector"
+            key="selected_year",
         )
     st.divider()
     st.page_link("pages/outliers_cost_driver.py", label="Outlier Cost Driver")
