@@ -15,7 +15,7 @@ analytics/
 │   │   └── helpers.py       # Common data loading or transformation logic
 │   └── path_utils.py        # Adds the repo root to sys.path for clean imports
 │
-├── streamlit_apps/         # All Streamlit apps live here
+├── streamlit_apps/          # All Streamlit apps live here
 │   └── tuva_template/       # Example app with Snowflake connection and multipage layout
 │       ├── app.py
 │       ├── pages/
@@ -24,7 +24,7 @@ analytics/
 │       └── .streamlit/      # Config and secrets
 │           └── config.toml
 │
-├── venv/ (optional)        # Virtual environment (not checked into version control)
+├── venv/ (optional)         # Virtual environment (not checked into version control)
 ├── requirements.txt         # Python dependencies for this app
 └── README.md                # You're here
 ```
@@ -66,7 +66,7 @@ git clone https://github.com/tuva-health/analytics.git
 cd analytics
 ```
 
-### 3. Create a Virtual Environment & Install Dependencies
+### 3. Create a Virtual Environment & Install Dependencies:
 
 #### 💻 macOS/Linux
 ```bash

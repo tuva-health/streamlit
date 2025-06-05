@@ -40,7 +40,7 @@ This is a ready-to-run **Streamlit app template** for analyzing healthcare claim
    authenticator = "externalbrowser"
    ```
 
-3. **Ensure that the virtual environment is activated**
+3. **Ensure that the virtual environment is activated**:
 
    Once activated, you should see the venv name in your terminal prompt like:
 
@@ -53,27 +53,25 @@ This is a ready-to-run **Streamlit app template** for analyzing healthcare claim
 
    #### 💻 macOS/Linux
       ```bash
-      python3 -m venv .venv
-      source .venv/bin/activate
+      source ../../venv/bin/activate
       pip install --upgrade pip
       pip install -r requirements.txt
       ```
 
    #### 🪟 Windows
       ```bash
-      python -m venv .venv
-      .venv\Scripts\activate
+      ..\..\venv\Scripts\activate
       pip install --upgrade pip
       pip install -r requirements.txt
       ```
 
-3. **Run the app**:
+4. **Run the app**:
 
    ```bash
    streamlit run app.py
    ```
 
-4. The app will open in your browser at [http://localhost:8501](http://localhost:8501)
+5. **The app will open in your browser at [http://localhost:8501](http://localhost:8501)**
 
 ---
 
