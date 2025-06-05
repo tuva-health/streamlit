@@ -38,8 +38,7 @@ To create a new app:
 1. Create a new folder inside `streamlit_apps/`, e.g. `streamlit_apps/my_new_app/`
 
 2. Inside that folder, add:
-   - `app.py` — your main Streamlit entry point  
-   - `requirements.txt` — app-specific dependencies (optional if shared)  
+   - `app.py` — your main Streamlit entry point    
    - `.streamlit/` folder with:
      - `config.toml`
      - `secrets.toml`
