@@ -3,14 +3,6 @@ from pathlib import Path
 import streamlit as st
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-# from snowflake_data import (
-#     get_encounters_per_1000_by_encounter_group,
-#     get_encounters_per_1000_by_encounter_type,
-#     get_paid_per_encounter_by_encounter_group,
-#     get_paid_per_encounter_by_encounter_type,
-#     get_pmpm_by_encounter_group,
-#     get_pmpm_by_encounter_type
-# )
 from csv_data import (
     get_pmpm_and_encounters_by_group_csv,
     get_pmpm_and_encounters_by_type_csv
@@ -22,19 +14,11 @@ sys.path.append(str(Path(__file__).resolve().parents[3]))
 from shared import path_utils
 path_utils.add_repo_to_path(levels_up=3)
 
-# conn = st.connection("snowflake")
 year = st.session_state.get("page_selector") if "page_selector" in st.session_state else None
 
 
 outlier_encouter_group_data = get_pmpm_and_encounters_by_group_csv(year)
-# pmpm_group = get_pmpm_by_encounter_group(conn, year).fillna('null')
-# per_1000_group = get_encounters_per_1000_by_encounter_group(conn, year).fillna('null')
-# paid_per_group = get_paid_per_encounter_by_encounter_group(conn, year).fillna('null')
-
-
 outlier_encouter_type_data = get_pmpm_and_encounters_by_type_csv(year)
-# per_1000_type = get_encounters_per_1000_by_encounter_type(conn, year).fillna('null')
-# paid_per_type = get_paid_per_encounter_by_encounter_type(conn, year).fillna('null')
 
 encounter_groups = outlier_encouter_group_data["ENCOUNTER_GROUP"].unique()
 
