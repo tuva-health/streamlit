@@ -141,7 +141,7 @@ def plot_risk_scores(risk_scores):
     return fig
 
 def main():
-    year = st.session_state.get("page_selector") if "page_selector" in st.session_state else None
+    year = st.session_state.get("selected_year") if "selected_year" in st.session_state else None
 
     outlier_population_by_state = get_outlier_population_by_state_csv(year)
     outlier_population_by_race = get_outlier_population_by_race_csv(year)
