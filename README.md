@@ -86,7 +86,7 @@ pip install -r requirements.txt
 
 ---
 
-## 🔐 Configure Snowflake Credentials (if needed)
+### 4. Configure Snowflake Credentials (if needed)
 
 Create the following file inside your app folder (e.g. `streamlit_apps/tuva_template/.streamlit/secrets.toml`):
 
@@ -104,7 +104,7 @@ authenticator = "externalbrowser"
 
 ---
 
-## ▶️ Running a Streamlit App
+### 5.  Running a Streamlit App
 
 To run an app (e.g. `tuva_template`), from the root of that app:
 
