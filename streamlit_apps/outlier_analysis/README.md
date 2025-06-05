@@ -1,6 +1,6 @@
 # Outlier Analysis App
 
-This is a ready-to-run **Streamlit app** that uses Tuva synthetic data to visualize outliers data. It provides a multipage layout, shared helper utilities, and secure Snowflake integration, serving as a template for building robust data analysis dashboards.
+This is a ready-to-run **Streamlit App** that uses Tuva synthetic data to visualize outliers data. It provides a multipage layout, shared helper utilities, and secure Snowflake integration, serving as a template for building robust data analysis dashboards.
 
 ---
 
@@ -20,24 +20,30 @@ This is a ready-to-run **Streamlit app** that uses Tuva synthetic data to visual
    cd streamlit_apps/outlier_analysis
    ```
 
-2. **Activate your virtual environment & Install dependencies**
+2. **Ensure that the virtual environment is activated**:
 
+   Once activated, you should see the venv name in your terminal prompt like:
+
+   ```bash
+   (venv) $
+   ```
+
+   If you don't see this, it likely means the environment is not activated.
+   To activate it, follow the instructions in the README.md file located in the root folder, or use one of the following commands based on your OS:
 
    #### 💻 macOS/Linux
-   ```bash
-   python3 -m venv .venv
-   source ../../.venv/bin/activate
-   pip install --upgrade pip
-   pip install -r requirements.txt
-   ```
+      ```bash
+      source ../../venv/bin/activate
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      ```
 
    #### 🪟 Windows
-   ```bash
-   python -m venv .venv
-   ..\.venv\Scripts\activate
-   pip install --upgrade pip
-   pip install -r requirements.txt
-   ```
+      ```bash
+      ..\..\venv\Scripts\activate
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      ```
 
 3. **Run the app**:
 
@@ -45,7 +51,7 @@ This is a ready-to-run **Streamlit app** that uses Tuva synthetic data to visual
    streamlit run app.py
    ```
 
-4. The app will open in your browser at [http://localhost:8501](http://localhost:8501)
+4. **The app will open in your browser at [http://localhost:8501](http://localhost:8501)**
 
 ---
 
@@ -68,9 +74,8 @@ outlier_analysis/
 ├── pages/                     # Individual dashboard pages
 │   ├── dashboard.py
 │   └── dashboard-2.py
-├── sql/                     # SQL queries to create required tables for the CSVs
+├── sql/                       # SQL queries to create required tables for the CSVs
 │   └── outlier_queries.sql
-├── requirements.txt           # Python dependencies for this app
 └── .streamlit/                # Streamlit config and secrets if required
     └── config.toml
     └── secrets.toml (you create this)
@@ -100,7 +105,7 @@ If you'd like to run the Streamlit Outlier Analysis App using your **own data**,
 
    ```bash
    data/
-   ├── outlier_claims_agg.csv       # Replace with your exported file
+   ├── outlier_claims_agg.csv      # Replace with your exported file
    └── outlier_member_months.csv   # Replace with your exported file
 
 5. **Run the App**  
