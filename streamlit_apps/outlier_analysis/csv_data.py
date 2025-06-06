@@ -221,10 +221,9 @@ def get_pmpm_by_diagnosis_category_csv(selected_year):
     """Get PMPM by diagnosis category for the selected year."""
 
     member_count = get_member_count(selected_year)
-    mask = outlier_claims_agg_data["INCR_YEAR"].astype(str) == str(selected_year)
-    filtered = outlier_claims_agg_data[mask]
+    df_by_year = outlier_claims_agg_data[outlier_claims_agg_data["INCR_YEAR"].eq(selected_year)]
 
-    if member_count == 0 or filtered.empty:
+    if member_count == 0 or df_by_year.empty:
         return pd.DataFrame(
             columns=[
                 "DX_CCSR_CATEGORY2",
@@ -234,22 +233,27 @@ def get_pmpm_by_diagnosis_category_csv(selected_year):
             ]
         )
 
-    filtered["DX_CCSR_CATEGORY2"] = filtered["DX_CCSR_CATEGORY2"].fillna("null")
+    df_by_year["DX_CCSR_CATEGORY2"] = df_by_year["DX_CCSR_CATEGORY2"].fillna("null")
     pmpm_df = (
-        filtered.groupby("DX_CCSR_CATEGORY2", as_index=False)["PAID_AMOUNT"]
+        df_by_year.groupby("DX_CCSR_CATEGORY2", as_index=False)["PAID_AMOUNT"]
         .sum()
-        .assign(PMPM=lambda df: df["PAID_AMOUNT"] / member_count)
-        .assign(PMPM=lambda df: df["PMPM"].replace([float("inf"), -float("inf")], 0.0))
-        .assign(PERCENT_OF_TOTAL_PMPM=lambda df: (df["PMPM"] / df["PMPM"].sum()) * 100)
+        .assign(
+            PMPM=lambda df: np.where(
+                df["PAID_AMOUNT"] == 0, 0.0, df["PAID_AMOUNT"] / member_count 
+            ),
+            PERCENT_OF_TOTAL_PMPM=lambda df: (df["PMPM"] / df["PMPM"].sum()) * 100
+        )
         .sort_values(by="PMPM", ascending=False, ignore_index=True)[
             ["DX_CCSR_CATEGORY2", "PMPM", "PERCENT_OF_TOTAL_PMPM"]
         ]
     )
 
-    result = pmpm_df.assign(CUMULATIVE_PMPM=lambda df: df["PMPM"].cumsum())[
-        ["DX_CCSR_CATEGORY2", "PMPM", "CUMULATIVE_PMPM", "PERCENT_OF_TOTAL_PMPM"]
-    ]
-    result = result.sort_values(by="PMPM", ascending=True, ignore_index=True)
+    result = (
+        pmpm_df.assign(CUMULATIVE_PMPM=lambda df: df["PMPM"].cumsum())
+        .sort_values(by="PMPM", ascending=True, ignore_index=True)
+        [
+            ["DX_CCSR_CATEGORY2", "PMPM", "CUMULATIVE_PMPM", "PERCENT_OF_TOTAL_PMPM"]
+        ])
     return result
 
 
@@ -257,10 +261,9 @@ def get_pmpm_by_diagnosis_category_csv(selected_year):
 def get_pmpm_by_diagnosis_csv(selected_year):
     """Get PMPM by diagnosis for the selected year."""
     member_count = get_member_count(selected_year)
-    mask = outlier_claims_agg_data["INCR_YEAR"].astype(str) == str(selected_year)
-    filtered = outlier_claims_agg_data[mask]
-    filtered["DX_DESCRIPTION"] = filtered["DX_DESCRIPTION"].fillna("null")
-    if member_count == 0 or filtered.empty:
+    df_by_year = outlier_claims_agg_data[outlier_claims_agg_data["INCR_YEAR"].eq(selected_year)]
+
+    if member_count == 0 or df_by_year.empty:
         return pd.DataFrame(
             columns=[
                 "DX_DESCRIPTION",
@@ -270,19 +273,25 @@ def get_pmpm_by_diagnosis_csv(selected_year):
             ]
         )
 
+    df_by_year["DX_DESCRIPTION"] = df_by_year["DX_DESCRIPTION"].fillna("null")
     pmpm_df = (
-        filtered.groupby("DX_DESCRIPTION", as_index=False)["PAID_AMOUNT"]
+        df_by_year.groupby("DX_DESCRIPTION", as_index=False)["PAID_AMOUNT"]
         .sum()
-        .assign(PMPM=lambda df: df["PAID_AMOUNT"] / member_count)
-        .assign(PMPM=lambda df: df["PMPM"].replace([float("inf"), -float("inf")], 0.0))
-        .assign(PERCENT_OF_TOTAL_PMPM=lambda df: (df["PMPM"] / df["PMPM"].sum()) * 100)
+        .assign(
+            PMPM=lambda df: np.where(
+                df["PAID_AMOUNT"] == 0, 0.0, df["PAID_AMOUNT"] / member_count
+            ),
+            PERCENT_OF_TOTAL_PMPM=lambda df: (df["PMPM"] / df["PMPM"].sum()) * 100
+        )
         .sort_values(by="PMPM", ascending=False, ignore_index=True)[
             ["DX_DESCRIPTION", "PMPM", "PERCENT_OF_TOTAL_PMPM"]
         ]
     )
 
-    result = pmpm_df.assign(CUMULATIVE_PMPM=lambda df: df["PMPM"].cumsum())[
-        ["DX_DESCRIPTION", "PMPM", "CUMULATIVE_PMPM", "PERCENT_OF_TOTAL_PMPM"]
-    ]
-    result = result.sort_values(by="PMPM", ascending=True, ignore_index=True)
+    result = (
+        pmpm_df.assign(CUMULATIVE_PMPM=lambda df: df["PMPM"].cumsum())
+        .sort_values(by="PMPM", ascending=True, ignore_index=True)
+        [
+            ["DX_DESCRIPTION", "PMPM", "CUMULATIVE_PMPM", "PERCENT_OF_TOTAL_PMPM"]
+        ])
     return result
