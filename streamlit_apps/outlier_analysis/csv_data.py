@@ -103,7 +103,7 @@ def get_outlier_population_by_race_csv(selected_year):
 def get_outlier_population_by_state_csv(selected_year):
     """Get the outlier population by State for the selected year."""
     df_by_year = outlier_member_months_data[outlier_member_months_data['YEAR'].eq(selected_year)]
-    filtered_data = df_by_year[(outlier_member_months_data["STATE"].notnull())]
+    filtered_data = df_by_year[(df_by_year["STATE"].notnull())]
     if not filtered_data.empty:
         population_by_state = filtered_data.groupby('STATE')['MEMBER_ID'].nunique().reset_index(name='MEMBER_COUNT')
         total_members = population_by_state['MEMBER_COUNT'].sum()
@@ -122,7 +122,6 @@ def get_encounter_count(selected_year):
     if not df_by_year.empty:
         encounter_count = df_by_year['ENCOUNTER_ID'].nunique()
     return encounter_count
-
 
 @st.cache_data
 def get_pmpm_and_encounters_by_group_csv(selected_year):
@@ -166,7 +165,6 @@ def get_pmpm_and_encounters_by_group_csv(selected_year):
     result = result.sort_values(by='PMPM', ascending=True, ignore_index=True)
 
     return result
-
 
 @st.cache_data
 def get_pmpm_and_encounters_by_type_csv(selected_year):
@@ -253,7 +251,6 @@ def get_pmpm_by_diagnosis_category_csv(selected_year):
             ["DX_CCSR_CATEGORY2", "PMPM", "CUMULATIVE_PMPM", "PERCENT_OF_TOTAL_PMPM"]
         ])
     return result
-
 
 @st.cache_data
 def get_pmpm_by_diagnosis_csv(selected_year):
