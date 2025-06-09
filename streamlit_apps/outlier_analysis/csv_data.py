@@ -24,29 +24,29 @@ def get_year_list():
     return sorted(outlier_member_months_data['YEAR'].unique().tolist(), reverse=True)
 
 @st.cache_data
-def get_member_count(year):
+def get_member_count(selected_year):
     """Get the total number of outlier members for the selected year."""
-    mask = outlier_member_months_data['YEAR'].astype(str) == str(year)
+    df_by_year = outlier_member_months_data[outlier_member_months_data['YEAR'].eq(selected_year)]
     member_count = 0
-    if not outlier_member_months_data[mask].empty:
-        member_count = outlier_member_months_data[mask]['MEMBER_ID'].nunique()
+    if not df_by_year.empty:
+        member_count = df_by_year['MEMBER_ID'].nunique()
     return member_count
 
 @st.cache_data
 def get_metrics_data_csv(selected_year):
     """Get the metrics data for the selected year."""
     if selected_year:
-        # Convert selected_year to string for comparison
-        mask1 = outlier_member_months_data['YEAR'].astype(str) == str(selected_year)
+        member_months_by_year = outlier_member_months_data[outlier_member_months_data['YEAR'].eq(selected_year)]
 
-        mean_age = outlier_member_months_data[mask1]['AGE'].mean()
-        female_count = outlier_member_months_data[mask1 & (outlier_member_months_data["SEX"] == 'female')]['MEMBER_ID'].nunique()
+        mean_age = member_months_by_year['AGE'].mean()
+        female_count = member_months_by_year[member_months_by_year["SEX"] == 'female']['MEMBER_ID'].nunique()
         
-        mask2 = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
-        total_count = outlier_claims_agg_data[mask2]['TOTAL_MEMBERS'].iloc[0]
-        total_paid = outlier_claims_agg_data[mask2]['PAID_AMOUNT'].sum()
-        mean_paid = outlier_claims_agg_data[mask2]['MEAN_PAID'].iloc[0]
-        total_encounters = outlier_claims_agg_data[mask2]['ENCOUNTER_ID'].nunique()
+        claims_agg_by_year = outlier_claims_agg_data[outlier_claims_agg_data['INCR_YEAR'].eq(selected_year)]
+
+        total_count = claims_agg_by_year['TOTAL_MEMBERS'].iloc[0]
+        total_paid = claims_agg_by_year['PAID_AMOUNT'].sum()
+        mean_paid = claims_agg_by_year['MEAN_PAID'].iloc[0]
+        total_encounters = claims_agg_by_year['ENCOUNTER_ID'].nunique()
 
         return {
             "TOTAL_COUNT": total_count,
@@ -69,14 +69,13 @@ def get_metrics_data_csv(selected_year):
 @st.cache_data
 def get_v24_risk_score_csv(selected_year):
     """Get HCC risk score detail for the selected year."""
-    mask = outlier_member_months_data['YEAR'].astype(str) == str(selected_year)
-    filtered_data = outlier_member_months_data[mask] if selected_year else pd.DataFrame()
+    df_by_year = outlier_member_months_data[outlier_member_months_data['YEAR'].eq(selected_year)]
 
-    if not filtered_data.empty:
-        v24_risk_mean = filtered_data['V24_RISK_SCORE'].mean()
-        v24_risk_median = filtered_data['V24_RISK_SCORE'].median()
-        v24_risk_min = filtered_data['V24_RISK_SCORE'].min()
-        v24_risk_max = filtered_data['V24_RISK_SCORE'].max()
+    if not df_by_year.empty:
+        v24_risk_mean = df_by_year['V24_RISK_SCORE'].mean()
+        v24_risk_median = df_by_year['V24_RISK_SCORE'].median()
+        v24_risk_min = df_by_year['V24_RISK_SCORE'].min()
+        v24_risk_max = df_by_year['V24_RISK_SCORE'].max()
     else:
         v24_risk_mean = v24_risk_median = v24_risk_min = v24_risk_max = 0.0
 
@@ -90,8 +89,8 @@ def get_v24_risk_score_csv(selected_year):
 @st.cache_data
 def get_outlier_population_by_race_csv(selected_year):
     """Get the outlier population by Race for the selected year."""
-    mask = outlier_member_months_data['YEAR'].astype(str) == str(selected_year)
-    filtered_data = outlier_member_months_data[(mask) & (outlier_member_months_data["RACE"].notnull())] if selected_year else pd.DataFrame()
+    df_by_year = outlier_member_months_data[outlier_member_months_data['YEAR'].eq(selected_year)]
+    filtered_data = df_by_year[(df_by_year["RACE"].notnull())]
     if not filtered_data.empty:
         population_by_race = filtered_data.groupby('RACE')['MEMBER_ID'].nunique().reset_index(name='MEMBER_COUNT')
         total_members = population_by_race['MEMBER_COUNT'].sum()
@@ -103,8 +102,8 @@ def get_outlier_population_by_race_csv(selected_year):
 @st.cache_data
 def get_outlier_population_by_state_csv(selected_year):
     """Get the outlier population by State for the selected year."""
-    mask = outlier_member_months_data['YEAR'].astype(str) == str(selected_year)
-    filtered_data = outlier_member_months_data[(mask) & (outlier_member_months_data["STATE"].notnull())] if selected_year else pd.DataFrame()
+    df_by_year = outlier_member_months_data[outlier_member_months_data['YEAR'].eq(selected_year)]
+    filtered_data = df_by_year[(df_by_year["STATE"].notnull())]
     if not filtered_data.empty:
         population_by_state = filtered_data.groupby('STATE')['MEMBER_ID'].nunique().reset_index(name='MEMBER_COUNT')
         total_members = population_by_state['MEMBER_COUNT'].sum()
@@ -116,14 +115,13 @@ def get_outlier_population_by_state_csv(selected_year):
 # OUTLIERS BY ENCOUNTER #
 
 @st.cache_data
-def get_encounter_count(year):
+def get_encounter_count(selected_year):
     """Get the total number of encounters for the selected year."""
-    mask = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(year)
+    df_by_year = outlier_claims_agg_data[outlier_claims_agg_data['INCR_YEAR'].eq(selected_year)]
     encounter_count = 0
-    if not outlier_claims_agg_data[mask].empty:
-        encounter_count = outlier_claims_agg_data[mask]['ENCOUNTER_ID'].nunique()
+    if not df_by_year.empty:
+        encounter_count = df_by_year['ENCOUNTER_ID'].nunique()
     return encounter_count
-
 
 @st.cache_data
 def get_pmpm_and_encounters_by_group_csv(selected_year):
@@ -167,7 +165,6 @@ def get_pmpm_and_encounters_by_group_csv(selected_year):
     result = result.sort_values(by='PMPM', ascending=True, ignore_index=True)
 
     return result
-
 
 @st.cache_data
 def get_pmpm_and_encounters_by_type_csv(selected_year):
@@ -215,7 +212,6 @@ def get_pmpm_and_encounters_by_type_csv(selected_year):
 
 # OUTLIERS BY Diagnosis #
 
-
 @st.cache_data
 def get_pmpm_by_diagnosis_category_csv(selected_year):
     """Get PMPM by diagnosis category for the selected year."""
@@ -255,7 +251,6 @@ def get_pmpm_by_diagnosis_category_csv(selected_year):
             ["DX_CCSR_CATEGORY2", "PMPM", "CUMULATIVE_PMPM", "PERCENT_OF_TOTAL_PMPM"]
         ])
     return result
-
 
 @st.cache_data
 def get_pmpm_by_diagnosis_csv(selected_year):
