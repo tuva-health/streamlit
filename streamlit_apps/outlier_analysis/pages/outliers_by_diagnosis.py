@@ -1,18 +1,7 @@
-import sys
-from pathlib import Path
-import streamlit as st
 import plotly.graph_objects as go
+import streamlit as st
+from csv_data import get_pmpm_by_diagnosis_category_csv, get_pmpm_by_diagnosis_csv
 from plotly.subplots import make_subplots
-from csv_data import (
-    get_pmpm_by_diagnosis_category_csv,
-    get_pmpm_by_diagnosis_csv
-)
-
-# Add the repo root (analytics/) to sys.path so we can import shared modules
-sys.path.append(str(Path(__file__).resolve().parents[3]))
-
-from shared import path_utils
-path_utils.add_repo_to_path(levels_up=3)
 
 year = st.session_state.get("selected_year") if "selected_year" in st.session_state else None
 

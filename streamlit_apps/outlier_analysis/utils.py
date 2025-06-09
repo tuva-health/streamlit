@@ -1,5 +1,7 @@
+from decimal import ROUND_HALF_UP, Decimal
+
 import pandas as pd
-from decimal import Decimal, ROUND_HALF_UP
+
 
 def safe_extract(series, default=0, as_type=float):
     """Safely extract first item from a Series and convert to given type."""

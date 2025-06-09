@@ -1,4 +1,6 @@
 import streamlit as st
+from csv_data import get_year_list
+
 st.set_page_config(page_icon="assets/tuva_icon.ico", layout="wide")
 
 st.markdown(
@@ -57,7 +59,7 @@ app = st.navigation([
     ], position="hidden")
 
 # year_list = get_year_list(st.connection("snowflake"))
-from csv_data import get_year_list 
+
 year_list = get_year_list()
 with st.sidebar:
     selected_year = st.selectbox(

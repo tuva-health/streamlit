@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 
+
 def add_repo_to_path(levels_up=3):
     """
     Adds the project root to sys.path so shared modules can be imported.
