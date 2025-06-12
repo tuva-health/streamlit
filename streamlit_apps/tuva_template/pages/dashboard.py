@@ -1,18 +1,11 @@
-import sys
-from pathlib import Path
-
-# Add the repo root (analytics/) to sys.path so we can import shared modules
-sys.path.append(str(Path(__file__).resolve().parents[3]))
+import pandas as pd
+import plotly.express as px
+import streamlit as st
 
 from shared import path_utils
-path_utils.add_repo_to_path(levels_up=3)
-
-import streamlit as st
-import plotly.express as px
-import pandas as pd
-
 from shared.utils import helpers
 
+path_utils.add_repo_to_path(levels_up=3)
 
 
 # Use helper function

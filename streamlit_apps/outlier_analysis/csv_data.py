@@ -1,6 +1,6 @@
-import streamlit as st
 import numpy as np
 import pandas as pd
+import streamlit as st
 
 
 @st.cache_data
@@ -215,7 +215,6 @@ def get_pmpm_and_encounters_by_type_csv(selected_year):
 @st.cache_data
 def get_pmpm_by_diagnosis_category_csv(selected_year):
     """Get PMPM by diagnosis category for the selected year."""
-
     member_count = get_member_count(selected_year)
     df_by_year = outlier_claims_agg_data[outlier_claims_agg_data["INCR_YEAR"].eq(selected_year)]
 
