@@ -1,8 +1,3 @@
-Absolutely! Here's a complete `README.md` for the `streamlit_apps/tuva_template/` folder, formatted in Markdown and ready to drop in:
-
----
-
-```markdown
 # Tuva Streamlit Template App
 
 This is a ready-to-run **Streamlit app template** for analyzing healthcare claims data using the Tuva data model and Snowflake. It demonstrates best practices for structuring multipage apps, using shared helper functions, and working with Snowflake credentials securely.
@@ -27,20 +22,7 @@ This is a ready-to-run **Streamlit app template** for analyzing healthcare claim
    cd streamlit_apps/tuva_template
    ```
 
-2. **(Optional but recommended) Activate your virtual environment**:
-
-   ```bash
-   source ../../.venv/bin/activate      # Mac/Linux
-   .\\..\\.venv\\Scripts\\activate      # Windows
-   ```
-
-3. **Install dependencies**:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Set up Snowflake credentials** by creating a file:
+2. **Set up Snowflake credentials** by creating a file:
 
    ```
    .streamlit/secrets.toml
@@ -58,13 +40,38 @@ This is a ready-to-run **Streamlit app template** for analyzing healthcare claim
    authenticator = "externalbrowser"
    ```
 
-5. **Run the app**:
+3. **Ensure that the virtual environment is activated**:
+
+   Once activated, you should see the venv name in your terminal prompt like:
+
+   ```bash
+   (venv) $
+   ```
+
+   If you don't see this, it likely means the environment is not activated.
+   To activate it, follow the instructions in the README.md file located in the root folder, or use one of the following commands based on your OS:
+
+   #### 💻 macOS/Linux
+      ```bash
+      source ../../venv/bin/activate
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      ```
+
+   #### 🪟 Windows
+      ```bash
+      ..\..\venv\Scripts\activate
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      ```
+
+4. **Run the app**:
 
    ```bash
    streamlit run app.py
    ```
 
-6. The app will open in your browser at [http://localhost:8501](http://localhost:8501)
+5. **The app will open in your browser at [http://localhost:8501](http://localhost:8501)**
 
 ---
 
@@ -84,11 +91,9 @@ tuva_template/
 ├── pages/                     # Individual dashboard pages
 │   ├── dashboard.py
 │   └── claim_amount.py
-├── requirements.txt           # Python dependencies for this app
 └── .streamlit/                # Streamlit config and secrets
     └── config.toml
     └── secrets.toml (you create this)
 ```
 
 ---
-
