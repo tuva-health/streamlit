@@ -1,13 +1,38 @@
-import plotly.graph_objects as go
+import sys
+from pathlib import Path
 import streamlit as st
-from csv_data import get_pmpm_by_diagnosis_category_csv, get_pmpm_by_diagnosis_csv
+import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from csv_data import (
+    get_pmpm_by_diagnosis_category_csv,
+    get_pmpm_by_diagnosis_csv
+)
+
+
+
+# Add the repo root (analytics/) to sys.path so we can import shared modules
+sys.path.append(str(Path(__file__).resolve().parents[3]))
+
+from shared import path_utils
+path_utils.add_repo_to_path(levels_up=3)
 
 year = st.session_state.get("selected_year") if "selected_year" in st.session_state else None
 
+# Add slider to select the number of diagnoses to show
+top_n = st.sidebar.slider("Number of Diagnoses to Show", 10, 500, 100, step=1) 
+
+
 # Use of local CSV files instead of Snowflake queries
+
 diagnosis_category_data = get_pmpm_by_diagnosis_category_csv(year)
+diagnosis_category_data = diagnosis_category_data.sort_values(by="PERCENT_OF_TOTAL_PMPM", ascending=False).head(top_n)
+
 diagnosis_data = get_pmpm_by_diagnosis_csv(year)
+diagnosis_data = diagnosis_data.sort_values(by="PERCENT_OF_TOTAL_PMPM", ascending=False).head(top_n)
+
+
+# diagnosis_category_data = get_pmpm_by_diagnosis_category_csv(year)
+# diagnosis_data = get_pmpm_by_diagnosis_csv(year)
 
 def truncate_label(label, max_length=30):
     return str(label) if len(str(label)) <= max_length else str(label)[:max_length] + "..."
@@ -99,8 +124,14 @@ diagnosis_category_fig.update_layout(
     hovermode='y',
 )
 
+#make it so highest percent paid pmpm category is at the top
+diagnosis_category_fig.update_yaxes(autorange="reversed")
+
+
 st.markdown("<h5 style='text-align: center; font-weight: bold; padding-bottom: 0;'>Diagnosis Category</h3>", unsafe_allow_html=True)
 st.plotly_chart(diagnosis_category_fig, use_container_width=True, key="diagnosis-category-chart")
+
+
 
 diagnosis_fig = make_subplots(
     rows=1, cols=2,
@@ -166,6 +197,10 @@ diagnosis_fig.update_layout(
     ),
     hovermode='y',
 )
+diagnosis_fig.update_yaxes(autorange="reversed")
+
 
 st.markdown("<h5 style='text-align: center; font-weight: bold; padding-bottom: 0;'>Diagnosis</h3>", unsafe_allow_html=True)
 st.plotly_chart(diagnosis_fig, use_container_width=True, key="diagnosis-chart")
+
+
