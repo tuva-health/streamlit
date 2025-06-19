@@ -10,9 +10,10 @@ sys.path.append(str(Path(__file__).resolve().parents[3]))
 from csv_data import (
     get_member_count,
     get_metrics_data_csv,
+    get_member_months_count,
+    get_v24_risk_score_csv,
     get_outlier_population_by_race_csv,
     get_outlier_population_by_state_csv,
-    get_v24_risk_score_csv,
 )
 from utils import format_large_number, round_nearest_int
 
@@ -21,6 +22,7 @@ def display_metrics(avg_hcc_risk_score, year):
     """Display summary metrics in columns."""
     metrics_data = get_metrics_data_csv(year)
     total_outlier_members = get_member_count(year)
+    total_member_months = get_member_months_count(year)
 
     # Extract and sanitize values
     total_members = metrics_data.get("TOTAL_COUNT", 0)
@@ -28,13 +30,13 @@ def display_metrics(avg_hcc_risk_score, year):
     female_count = metrics_data.get("FEMALE_COUNT", 0)
     total_paid = metrics_data.get("TOTAL_PAID", 0)
     mean_age = metrics_data.get("MEAN_AGE", 0)
-    mean_paid = metrics_data.get("MEAN_PAID", 0)
+    outlier_threshold = metrics_data.get("OUTLIER_THRESHOLD", 0)
 
     # Compute derived metrics safely
     percent_female = (female_count / total_outlier_members) * 100
-    encounter_per_1000 = (total_encounters / total_outlier_members) * 12000
+    encounter_per_1000 = (total_encounters / total_member_months) * 12000
     paid_per_encounter = (total_paid / total_encounters)
-    paid_pmpm = (total_paid / total_outlier_members)
+    paid_pmpm = (total_paid / total_member_months)
 
     col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 2, 4], gap="small")
     with col1:
@@ -57,12 +59,12 @@ def display_metrics(avg_hcc_risk_score, year):
         st.markdown(
             f"""
             **Inclusion Criteria:**  
-            All beneficiaries with annual claim costs > 2 std dev from mean (${mean_paid:,.2f})
+            All beneficiaries with annual claim costs > 2 std dev from mean (${outlier_threshold:,.2f})
 
             
             **Total Members:** {total_members}  
             **Total Outlier Members:** {total_outlier_members}  
-            **Total Outlier Percentage:** {total_outlier_members / total_members * 100:,.2f}%
+            **Outlier Members Percentage:** {total_outlier_members / total_members * 100:,.2f}%
             """
         )
 
@@ -72,6 +74,9 @@ def display_metrics(avg_hcc_risk_score, year):
             [data-testid="stMetricValue"] {
                 font-size: 14px;
                 font-weight: 700;
+            }
+            [data-testid="stVerticalBlock"] {
+                gap: 0.5rem;
             }
             </style>
         """,

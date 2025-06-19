@@ -99,7 +99,7 @@ diagnosis_category_fig.update_layout(
     hovermode='y',
 )
 
-st.markdown("<h5 style='text-align: center; font-weight: bold; padding-bottom: 0;'>Diagnosis Category</h3>", unsafe_allow_html=True)
+st.markdown("<h5 style='text-align: center; font-weight: bold;'>Diagnosis Category</h3>", unsafe_allow_html=True)
 st.plotly_chart(diagnosis_category_fig, use_container_width=True, key="diagnosis-category-chart")
 
 diagnosis_fig = make_subplots(
@@ -167,5 +167,5 @@ diagnosis_fig.update_layout(
     hovermode='y',
 )
 
-st.markdown("<h5 style='text-align: center; font-weight: bold; padding-bottom: 0;'>Diagnosis</h3>", unsafe_allow_html=True)
+st.markdown("<h5 style='text-align: center; font-weight: bold;'>Diagnosis</h3>", unsafe_allow_html=True)
 st.plotly_chart(diagnosis_fig, use_container_width=True, key="diagnosis-chart")
