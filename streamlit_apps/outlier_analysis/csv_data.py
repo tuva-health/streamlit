@@ -145,7 +145,7 @@ def get_pmpm_and_encounters_by_group_csv(selected_year):
     if member_months_count == 0 or df_by_year.empty:
         return pd.DataFrame(columns=['ENCOUNTER_GROUP', 'PMPM', 'ENCOUNTERS_PER_1000', 'PAID_PER_ENCOUNTER'])
     
-    df_by_year["ENCOUNTER_GROUP"] = df_by_year["ENCOUNTER_GROUP"].fillna('null')
+    df_by_year.loc[:, "ENCOUNTER_GROUP"] = df_by_year["ENCOUNTER_GROUP"].fillna('null')
    
     combined_df = (
         df_by_year
@@ -188,7 +188,7 @@ def get_pmpm_and_encounters_by_type_csv(selected_year):
     if member_months_count == 0 or df_by_year.empty:
         return pd.DataFrame(columns=['ENCOUNTER_GROUP', 'ENCOUNTER_TYPE', 'PAID_AMOUNT', 'PMPM', 'ENCOUNTERS_PER_1000', 'PAID_PER_ENCOUNTER'])
     
-    df_by_year.fillna({'ENCOUNTER_GROUP': 'null', 'ENCOUNTER_TYPE': 'null'}, inplace=True)
+    df_by_year = df_by_year.fillna({'ENCOUNTER_GROUP': 'null', 'ENCOUNTER_TYPE': 'null'})
 
     combined_df = (
         df_by_year
@@ -240,7 +240,7 @@ def get_pmpm_by_diagnosis_category_csv(selected_year):
             ]
         )
 
-    df_by_year["DX_CCSR_CATEGORY2"] = df_by_year["DX_CCSR_CATEGORY2"].fillna("null")
+    df_by_year.loc[:, "DX_CCSR_CATEGORY2"] = df_by_year["DX_CCSR_CATEGORY2"].fillna("null")
     pmpm_df = (
         df_by_year.groupby("DX_CCSR_CATEGORY2", as_index=False)["PAID_AMOUNT"]
         .sum()
@@ -279,7 +279,7 @@ def get_pmpm_by_diagnosis_csv(selected_year):
             ]
         )
 
-    df_by_year["DX_DESCRIPTION"] = df_by_year["DX_DESCRIPTION"].fillna("null")
+    df_by_year.loc[:, "DX_DESCRIPTION"] = df_by_year["DX_DESCRIPTION"].fillna("null")
     pmpm_df = (
         df_by_year.groupby("DX_DESCRIPTION", as_index=False)["PAID_AMOUNT"]
         .sum()
