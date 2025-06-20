@@ -1,25 +1,32 @@
 import sys
 from pathlib import Path
-
+import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
-import streamlit as st
 
 sys.path.append(str(Path(__file__).resolve().parents[3]))
 
+from utils import (
+    round_nearest_int, 
+    format_large_number
+    )
+from shared import path_utils
 from csv_data import (
-    get_member_count,
     get_metrics_data_csv,
+    get_member_count,
     get_member_months_count,
     get_v24_risk_score_csv,
     get_outlier_population_by_race_csv,
     get_outlier_population_by_state_csv,
 )
-from utils import format_large_number, round_nearest_int
 
+
+# Add the repo root (analytics/) to sys.path so we can import shared modules
+path_utils.add_repo_to_path(levels_up=3)
 
 def display_metrics(avg_hcc_risk_score, year):
     """Display summary metrics in columns."""
+
     metrics_data = get_metrics_data_csv(year)
     total_outlier_members = get_member_count(year)
     total_member_months = get_member_months_count(year)
@@ -63,6 +70,7 @@ def display_metrics(avg_hcc_risk_score, year):
                 All beneficiaries with annual claim costs > 2 std dev from mean (${outlier_threshold:,.2f})
             """
         )
+        """"""
         member_col, amount_col = st.columns([1, 1], gap="small")
         with member_col:
             st.html(f"""
