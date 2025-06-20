@@ -26,58 +26,71 @@ def display_metrics(avg_hcc_risk_score, year):
 
     # Extract and sanitize values
     total_members = metrics_data.get("TOTAL_COUNT", 0)
+    total_paid_amount_val = metrics_data.get("TOTAL_PAID_AMOUNT", 0)
+    total_paid_amount = format_large_number(total_paid_amount_val).strip()
+    total_outlier_paid_val = metrics_data.get("TOTAL_OUTLIER_PAID", 0)
+    total_outlier_paid = format_large_number(total_outlier_paid_val).strip()
     total_encounters = metrics_data.get("TOTAL_ENCOUNTERS", 0)
     female_count = metrics_data.get("FEMALE_COUNT", 0)
-    total_paid = metrics_data.get("TOTAL_PAID", 0)
     mean_age = metrics_data.get("MEAN_AGE", 0)
     outlier_threshold = metrics_data.get("OUTLIER_THRESHOLD", 0)
 
     # Compute derived metrics safely
     percent_female = (female_count / total_outlier_members) * 100
     encounter_per_1000 = (total_encounters / total_member_months) * 12000
-    paid_per_encounter = (total_paid / total_encounters)
-    paid_pmpm = (total_paid / total_member_months)
+    paid_per_encounter = (total_outlier_paid_val / total_encounters)
+    paid_pmpm = (total_outlier_paid_val / total_member_months)
 
-    col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 2, 4], gap="small")
+    col1, col2, col3, col5 = st.columns([2, 2, 2, 6], gap="small")
     with col1:
         st.metric("Members", total_outlier_members, border=True)
-        st.metric("Mean Age ", round_nearest_int(mean_age), border=True)
+        st.metric("Avg HCC Risk Score", f"{avg_hcc_risk_score:.2f}", border=True)
+        st.metric("Encounters / 1000", round_nearest_int(encounter_per_1000), border=True)
 
     with col2:
         st.metric("Percent Female", f"{percent_female:.2f}%", border=True)
-        st.metric("Avg HCC Risk Score", f"{avg_hcc_risk_score:.2f}", border=True)
+        st.metric("Paid Amount", total_outlier_paid, border=True)
+        st.metric("Paid / Encounter", f"${paid_per_encounter:,.2f}", border=True)
 
     with col3:
-        st.metric("Paid Amount", format_large_number(total_paid), border=True)
+        st.metric("Mean Age ", round_nearest_int(mean_age), border=True)
         st.metric("Paid PMPM", f"${round_nearest_int(paid_pmpm)}", border=True)
-
-    with col4:
-        st.metric("Encounters / 1000", round_nearest_int(encounter_per_1000), border=True)
-        st.metric("Paid / Encounter", f"${paid_per_encounter:,.2f}", border=True)
 
     with col5:
         st.markdown(
             f"""
-            **Inclusion Criteria:**  
-            All beneficiaries with annual claim costs > 2 std dev from mean (${outlier_threshold:,.2f})
-
-            
-            **Total Members:** {total_members}  
-            **Total Outlier Members:** {total_outlier_members}  
-            **Outlier Members Percentage:** {total_outlier_members / total_members * 100:,.2f}%
+                **Inclusion Criteria:**  
+                All beneficiaries with annual claim costs > 2 std dev from mean (${outlier_threshold:,.2f})
             """
         )
+        member_col, amount_col = st.columns([1, 1], gap="small")
+        with member_col:
+            st.html(f"""
+                <div>
+                    <b>Total Members:</b> {total_members}<br>
+                    <b>Outlier Member Count:</b> {total_outlier_members}<br>
+                    <b>Outlier Member Ratio:</b> {total_outlier_members / total_members * 100:,.2f}%
+                </div>
+            """)
+        with amount_col:
+            st.html(f"""
+                <div>
+                    <b>Total Paid Amount:</b> {total_paid_amount}<br>
+                    <b>Outlier Paid Amount:</b> {total_outlier_paid}<br>
+                    <b>Outlier Amount Ratio:</b> {total_outlier_paid_val / total_paid_amount_val * 100:,.2f}%
+                </div>
+            """)
 
         st.markdown(
         """
             <style>
-            [data-testid="stMetricValue"] {
-                font-size: 14px;
-                font-weight: 700;
-            }
-            [data-testid="stVerticalBlock"] {
-                gap: 0.5rem;
-            }
+                [data-testid="stMetricValue"] {
+                    font-size: 14px;
+                    font-weight: 700;
+                }
+                [data-testid="stVerticalBlock"] {
+                    gap: 0.5rem;
+                }
             </style>
         """,
             unsafe_allow_html=True,

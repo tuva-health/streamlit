@@ -52,14 +52,16 @@ def get_metrics_data_csv(selected_year):
         
         mask2 = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
         total_count = outlier_claims_agg_data[mask2]['TOTAL_MEMBERS'].iloc[0]
-        total_paid = outlier_claims_agg_data[mask2]['PAID_AMOUNT'].sum()
+        total_paid_amount = outlier_claims_agg_data[mask2]['TOTAL_PAID'].iloc[0]
+        total_outlier_paid = outlier_claims_agg_data[mask2]['PAID_AMOUNT'].sum()
         outlier_threshold = outlier_claims_agg_data[mask2]['OUTLIER_THRESHOLD'].iloc[0]
         total_encounters = outlier_claims_agg_data[mask2]['ENCOUNTER_ID'].nunique()
 
         return {
             "TOTAL_COUNT": total_count,
+            "TOTAL_PAID_AMOUNT": total_paid_amount,
             "TOTAL_ENCOUNTERS": total_encounters,
-            "TOTAL_PAID": total_paid,
+            "TOTAL_OUTLIER_PAID": total_outlier_paid,
             "OUTLIER_THRESHOLD": outlier_threshold,
             "MEAN_AGE": mean_age, 
             "FEMALE_COUNT": female_count
@@ -67,8 +69,9 @@ def get_metrics_data_csv(selected_year):
     
     return {
         "TOTAL_COUNT": 0, 
+        "TOTAL_PAID_AMOUNT": 0,
         "TOTAL_ENCOUNTERS": 0,
-        "TOTAL_PAID": 0,
+        "TOTAL_OUTLIER_PAID": 0,
         "MEAN_AGE": 0, 
         "OUTLIER_THRESHOLD": 0,
         "FEMALE_COUNT": 0
