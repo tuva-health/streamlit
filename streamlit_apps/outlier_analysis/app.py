@@ -1,7 +1,8 @@
 import streamlit as st
-from csv_data import get_year_list
 
 st.set_page_config(page_icon="assets/tuva_icon.ico", layout="wide")
+
+from csv_data import get_year_list
 
 st.markdown(
     """
@@ -26,6 +27,11 @@ st.markdown(
             min-width: 0px !important;
             transition: min-width 0.3s ease-in-out, width 0.3s ease-in-out;
         }
+        .stMainBlockContainer  {
+            padding-left: 1rem;
+            padding-right: 1rem;
+            padding-top: 3rem;
+            padding-bottom: 2rem;
     </style>
     """,
     unsafe_allow_html=True
@@ -33,20 +39,6 @@ st.markdown(
 
 # Display Logo
 st.logo("assets/tuva_logo.png", size="large")
-
-st.markdown(
-    """
-    <style>
-        .stMainBlockContainer  {
-            padding-left: 1rem;
-            padding-right: 1rem;
-            padding-top: 3rem;
-            padding-bottom: 2rem;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
 
 # Importing pages for navigation
 dashboard_page = st.Page("pages/outliers_cost_driver.py", title="Outlier Cost Driver")

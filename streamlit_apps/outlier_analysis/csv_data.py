@@ -33,6 +33,15 @@ def get_member_count(selected_year):
     return member_count
 
 @st.cache_data
+def get_member_months_count(year):
+    """Get the total number of outlier members for the selected year."""
+    mask = outlier_member_months_data['YEAR'].astype(str) == str(year)
+    member_months_count = 0
+    if not outlier_member_months_data[mask].empty:
+        member_months_count = outlier_member_months_data[mask][['MEMBER_ID', 'YEAR_MONTH']].drop_duplicates().shape[0]
+    return member_months_count
+
+@st.cache_data
 def get_metrics_data_csv(selected_year):
     """Get the metrics data for the selected year."""
     if selected_year:
@@ -41,28 +50,30 @@ def get_metrics_data_csv(selected_year):
         mean_age = member_months_by_year['AGE'].mean()
         female_count = member_months_by_year[member_months_by_year["SEX"] == 'female']['MEMBER_ID'].nunique()
         
-        claims_agg_by_year = outlier_claims_agg_data[outlier_claims_agg_data['INCR_YEAR'].eq(selected_year)]
-
-        total_count = claims_agg_by_year['TOTAL_MEMBERS'].iloc[0]
-        total_paid = claims_agg_by_year['PAID_AMOUNT'].sum()
-        mean_paid = claims_agg_by_year['MEAN_PAID'].iloc[0]
-        total_encounters = claims_agg_by_year['ENCOUNTER_ID'].nunique()
+        mask2 = outlier_claims_agg_data['INCR_YEAR'].astype(str) == str(selected_year)
+        total_count = outlier_claims_agg_data[mask2]['TOTAL_MEMBERS'].iloc[0]
+        total_paid_amount = outlier_claims_agg_data[mask2]['TOTAL_PAID'].iloc[0]
+        total_outlier_paid = outlier_claims_agg_data[mask2]['PAID_AMOUNT'].sum()
+        outlier_threshold = outlier_claims_agg_data[mask2]['OUTLIER_THRESHOLD'].iloc[0]
+        total_encounters = outlier_claims_agg_data[mask2]['ENCOUNTER_ID'].nunique()
 
         return {
             "TOTAL_COUNT": total_count,
+            "TOTAL_PAID_AMOUNT": total_paid_amount,
             "TOTAL_ENCOUNTERS": total_encounters,
-            "TOTAL_PAID": total_paid,
-            "MEAN_PAID": mean_paid,
+            "TOTAL_OUTLIER_PAID": total_outlier_paid,
+            "OUTLIER_THRESHOLD": outlier_threshold,
             "MEAN_AGE": mean_age, 
             "FEMALE_COUNT": female_count
             }
     
     return {
         "TOTAL_COUNT": 0, 
+        "TOTAL_PAID_AMOUNT": 0,
         "TOTAL_ENCOUNTERS": 0,
-        "TOTAL_PAID": 0,
+        "TOTAL_OUTLIER_PAID": 0,
         "MEAN_AGE": 0, 
-        "MEAN_PAID": 0,
+        "OUTLIER_THRESHOLD": 0,
         "FEMALE_COUNT": 0
         }
 
@@ -126,15 +137,15 @@ def get_encounter_count(selected_year):
 @st.cache_data
 def get_pmpm_and_encounters_by_group_csv(selected_year):
     """Get PMPM and ENCOUNTERS_PER_1000 and PAID_PER_ENCOUNTER by encounter group for the selected year."""
-    member_count = get_member_count(selected_year)
+    member_months_count = get_member_months_count(selected_year)
     encounter_count = get_encounter_count(selected_year)
     
     df_by_year = outlier_claims_agg_data[outlier_claims_agg_data['INCR_YEAR'].eq(selected_year)]
 
-    if member_count == 0 or df_by_year.empty:
+    if member_months_count == 0 or df_by_year.empty:
         return pd.DataFrame(columns=['ENCOUNTER_GROUP', 'PMPM', 'ENCOUNTERS_PER_1000', 'PAID_PER_ENCOUNTER'])
     
-    df_by_year["ENCOUNTER_GROUP"] = df_by_year["ENCOUNTER_GROUP"].fillna('null')
+    df_by_year.loc[:, "ENCOUNTER_GROUP"] = df_by_year["ENCOUNTER_GROUP"].fillna('null')
    
     combined_df = (
         df_by_year
@@ -144,8 +155,8 @@ def get_pmpm_and_encounters_by_group_csv(selected_year):
             ENCOUNTER_COUNT=('ENCOUNTER_ID', 'nunique')
         )
         .assign(
-            PMPM=lambda df: df['PAID_AMOUNT'] / member_count,
-            ENCOUNTERS_PER_1000=lambda df: df['ENCOUNTER_COUNT'] * 12000.0 / member_count,
+            PMPM=lambda df: df['PAID_AMOUNT'] / member_months_count,
+            ENCOUNTERS_PER_1000=lambda df: df['ENCOUNTER_COUNT'] * 12000.0 / member_months_count,
             PAID_PER_ENCOUNTER=lambda df: np.where(
                 df['ENCOUNTER_COUNT'] == 0, 0.0, df['PAID_AMOUNT'] / df['ENCOUNTER_COUNT']
             )
@@ -169,15 +180,15 @@ def get_pmpm_and_encounters_by_group_csv(selected_year):
 @st.cache_data
 def get_pmpm_and_encounters_by_type_csv(selected_year):
     """Get PMPM and ENCOUNTERS_PER_1000 by encounter type for the selected year."""
-    member_count = get_member_count(selected_year)
+    member_months_count = get_member_months_count(selected_year)
     encounter_count = get_encounter_count(selected_year)
 
     df_by_year = outlier_claims_agg_data[outlier_claims_agg_data['INCR_YEAR'].eq(selected_year)]
 
-    if member_count == 0 or df_by_year.empty:
+    if member_months_count == 0 or df_by_year.empty:
         return pd.DataFrame(columns=['ENCOUNTER_GROUP', 'ENCOUNTER_TYPE', 'PAID_AMOUNT', 'PMPM', 'ENCOUNTERS_PER_1000', 'PAID_PER_ENCOUNTER'])
     
-    df_by_year.fillna({'ENCOUNTER_GROUP': 'null', 'ENCOUNTER_TYPE': 'null'}, inplace=True)
+    df_by_year = df_by_year.fillna({'ENCOUNTER_GROUP': 'null', 'ENCOUNTER_TYPE': 'null'})
 
     combined_df = (
         df_by_year
@@ -187,8 +198,8 @@ def get_pmpm_and_encounters_by_type_csv(selected_year):
             ENCOUNTER_COUNT=('ENCOUNTER_ID', 'nunique')
         )
         .assign(
-            PMPM=lambda df: df['PAID_AMOUNT'] / member_count,
-            ENCOUNTERS_PER_1000=lambda df: df['ENCOUNTER_COUNT'] * 12000.0 / member_count,
+            PMPM=lambda df: df['PAID_AMOUNT'] / member_months_count,
+            ENCOUNTERS_PER_1000=lambda df: df['ENCOUNTER_COUNT'] * 12000.0 / member_months_count,
             PAID_PER_ENCOUNTER=lambda df: np.where(
                 df['ENCOUNTER_COUNT'] == 0, 0.0, df['PAID_AMOUNT'] / df['ENCOUNTER_COUNT']
             )
@@ -215,10 +226,11 @@ def get_pmpm_and_encounters_by_type_csv(selected_year):
 @st.cache_data
 def get_pmpm_by_diagnosis_category_csv(selected_year):
     """Get PMPM by diagnosis category for the selected year."""
-    member_count = get_member_count(selected_year)
+
+    member_months_count = get_member_months_count(selected_year)
     df_by_year = outlier_claims_agg_data[outlier_claims_agg_data["INCR_YEAR"].eq(selected_year)]
 
-    if member_count == 0 or df_by_year.empty:
+    if member_months_count == 0 or df_by_year.empty:
         return pd.DataFrame(
             columns=[
                 "DX_CCSR_CATEGORY2",
@@ -228,13 +240,13 @@ def get_pmpm_by_diagnosis_category_csv(selected_year):
             ]
         )
 
-    df_by_year["DX_CCSR_CATEGORY2"] = df_by_year["DX_CCSR_CATEGORY2"].fillna("null")
+    df_by_year.loc[:, "DX_CCSR_CATEGORY2"] = df_by_year["DX_CCSR_CATEGORY2"].fillna("null")
     pmpm_df = (
         df_by_year.groupby("DX_CCSR_CATEGORY2", as_index=False)["PAID_AMOUNT"]
         .sum()
         .assign(
             PMPM=lambda df: np.where(
-                df["PAID_AMOUNT"] == 0, 0.0, df["PAID_AMOUNT"] / member_count 
+                df["PAID_AMOUNT"] == 0, 0.0, df["PAID_AMOUNT"] / member_months_count 
             ),
             PERCENT_OF_TOTAL_PMPM=lambda df: (df["PMPM"] / df["PMPM"].sum()) * 100
         )
@@ -254,10 +266,10 @@ def get_pmpm_by_diagnosis_category_csv(selected_year):
 @st.cache_data
 def get_pmpm_by_diagnosis_csv(selected_year):
     """Get PMPM by diagnosis for the selected year."""
-    member_count = get_member_count(selected_year)
+    member_months_count = get_member_months_count(selected_year)
     df_by_year = outlier_claims_agg_data[outlier_claims_agg_data["INCR_YEAR"].eq(selected_year)]
 
-    if member_count == 0 or df_by_year.empty:
+    if member_months_count == 0 or df_by_year.empty:
         return pd.DataFrame(
             columns=[
                 "DX_DESCRIPTION",
@@ -267,13 +279,13 @@ def get_pmpm_by_diagnosis_csv(selected_year):
             ]
         )
 
-    df_by_year["DX_DESCRIPTION"] = df_by_year["DX_DESCRIPTION"].fillna("null")
+    df_by_year.loc[:, "DX_DESCRIPTION"] = df_by_year["DX_DESCRIPTION"].fillna("null")
     pmpm_df = (
         df_by_year.groupby("DX_DESCRIPTION", as_index=False)["PAID_AMOUNT"]
         .sum()
         .assign(
             PMPM=lambda df: np.where(
-                df["PAID_AMOUNT"] == 0, 0.0, df["PAID_AMOUNT"] / member_count
+                df["PAID_AMOUNT"] == 0, 0.0, df["PAID_AMOUNT"] / member_months_count
             ),
             PERCENT_OF_TOTAL_PMPM=lambda df: (df["PMPM"] / df["PMPM"].sum()) * 100
         )
