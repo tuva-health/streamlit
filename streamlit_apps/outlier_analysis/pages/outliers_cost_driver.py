@@ -99,34 +99,37 @@ def display_metrics(avg_hcc_risk_score, year):
             unsafe_allow_html=True,
         )
 
-def plot_bar_chart(df, x, y, title, height=260):
-    """Create a horizontal bar chart with Plotly."""
+def plot_bar_chart(df, x, y, title, height=650):
+    """Create a horizontal bar chart with Plotly, showing full labels and scroll if needed."""
+    # Format text labels conditionally
+    text_labels = [f"{v:.1f}%" if x == "PERCENTAGE" else f"{int(v):,}" for v in df[x]]
+
     fig = px.bar(
         df,
         x=x,
         y=y,
         orientation="h",
-        text=x,
+        text=text_labels,
         height=height,
     )
     fig.update_layout(
         showlegend=False,
-        margin=dict(r=80),
-        xaxis_title=x,
-        yaxis_title=y,
-        yaxis=dict(
-            automargin=True,
-        ),
+        margin=dict(t=40, r=80, b=40, l=120),
         title=title,
         xaxis=dict(showticklabels=False),
+        yaxis=dict(
+            automargin=True,
+            tickfont=dict(size=13)
+        )
     )
     fig.update_traces(
         marker_color="#64B0E1",
         textposition="outside",
-        texttemplate="%{x:.1f}%" if x == "PERCENTAGE" else "%{x}",
-        cliponaxis=False,
+        cliponaxis=False
     )
     return fig
+
+
 
 def plot_risk_scores(risk_scores):
     """Plot risk scores distribution."""
@@ -168,9 +171,11 @@ def main():
 
     with st.container():
         graph1, graph2 = st.columns([1, 1], gap="large")
-        with graph1:
-            fig = plot_bar_chart(outlier_population_by_state, "PERCENTAGE", "STATE", "Outlier Population by State", 650)
-            st.plotly_chart(fig, use_container_width=True)
+with graph1:
+    fig = plot_bar_chart(outlier_population_by_state, "PERCENTAGE", "STATE", "Outlier Population by State", 1200)
+    st.markdown('<div style="height: 500px; overflow-y: auto;">', unsafe_allow_html=True)
+    st.plotly_chart(fig, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
         with graph2:
             fig = plot_bar_chart(outlier_population_by_race, "PERCENTAGE", "RACE", "Outlier Population by Race")
             st.plotly_chart(fig, use_container_width=True)
