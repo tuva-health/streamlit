@@ -187,10 +187,12 @@ encounter_type_fig.add_trace(
     row=1, col=3
 )
 
+encounter_type_labels = outlier_encouter_type_data["ENCOUNTER_TYPE"].tolist()
+
 encounter_type_fig.update_xaxes(showticklabels=False)
 
 encounter_type_fig.update_layout(
-    height=500,
+    height=max(30 * len(encounter_type_labels), 500),
     width=1200,
     title=dict(
         text="Encounter Type",
@@ -199,7 +201,26 @@ encounter_type_fig.update_layout(
         font=dict(size=20)
     ),
     margin=dict(b=2, r=65),
+    yaxis=dict(
+        tickmode="array",
+        tickvals=encounter_type_labels,
+        ticktext=encounter_type_labels,
+        tickfont=dict(size=11)
+    ),
+    yaxis2=dict(
+        tickmode="array",
+        tickvals=encounter_type_labels,
+        ticktext=encounter_type_labels,
+        tickfont=dict(size=11)
+    ),
+    yaxis3=dict(
+        tickmode="array",
+        tickvals=encounter_type_labels,
+        ticktext=encounter_type_labels,
+        tickfont=dict(size=11)
+    )
 )
+
 
 st.plotly_chart(encounter_type_fig, use_container_width=True)
 
