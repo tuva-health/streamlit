@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 sys.path.append(str(Path(__file__).resolve().parents[3]))
 
 from utils import (
-    round_nearest_int, 
+    round_nearest_int,
     format_large_number
 )
 from shared import path_utils
@@ -85,25 +85,23 @@ def display_metrics(avg_hcc_risk_score, year):
             """)
 
         st.markdown(
-        """
-            <style>
-                [data-testid="stMetricValue"] {
-                    font-size: 14px;
-                    font-weight: 700;
-                }
-                [data-testid="stVerticalBlock"] {
-                    gap: 0.5rem;
-                }
-            </style>
-        """,
+            """
+                <style>
+                    [data-testid="stMetricValue"] {
+                        font-size: 14px;
+                        font-weight: 700;
+                    }
+                    [data-testid="stVerticalBlock"] {
+                        gap: 0.5rem;
+                    }
+                </style>
+            """,
             unsafe_allow_html=True,
         )
 
 def plot_bar_chart(df, x, y, title, height=650):
     """Create a horizontal bar chart with Plotly, showing full labels and scroll if needed."""
-    # Format text labels conditionally
     text_labels = [f"{v:.1f}%" if x == "PERCENTAGE" else f"{int(v):,}" for v in df[x]]
-
     fig = px.bar(
         df,
         x=x,
@@ -129,8 +127,6 @@ def plot_bar_chart(df, x, y, title, height=650):
     )
     return fig
 
-
-
 def plot_risk_scores(risk_scores):
     """Plot risk scores distribution."""
     min_val = risk_scores.get("V24_RISK_MIN", 0.0)
@@ -155,33 +151,32 @@ def plot_risk_scores(risk_scores):
     return fig
 
 def main():
-    year = st.session_state.get("selected_year") if "selected_year" in st.session_state else None
+    year = st.session_state.get("selected_year") or 2018
 
     outlier_population_by_state = get_outlier_population_by_state_csv(year)
     outlier_population_by_race = get_outlier_population_by_race_csv(year)
     v24_risk_scores = get_v24_risk_score_csv(year)
 
     st.header("Outlier Cost Driver Dashboard", divider="grey")
-    st.markdown(
-        f"This dashboard presents key metrics and visualizations for outlier cost drivers in the year {year}."
-    )
+    st.markdown(f"This dashboard presents key metrics and visualizations for outlier cost drivers in the year {year}.")
 
     avg_hcc_risk_score = v24_risk_scores.get("V24_RISK_MEAN", 0.0)
     display_metrics(avg_hcc_risk_score, year)
 
-    with st.container():
-        graph1, graph2 = st.columns([1, 1], gap="large")
-with graph1:
-    fig = plot_bar_chart(outlier_population_by_state, "PERCENTAGE", "STATE", "Outlier Population by State", 1200)
-    st.markdown('<div style="height: 500px; overflow-y: auto;">', unsafe_allow_html=True)
-    st.plotly_chart(fig, use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-        with graph2:
-            fig = plot_bar_chart(outlier_population_by_race, "PERCENTAGE", "RACE", "Outlier Population by Race")
-            st.plotly_chart(fig, use_container_width=True)
+    # Layout for plots
+    chart_col1, chart_col2 = st.columns([2, 1.2], gap="large")
 
-            risk_score_fig = plot_risk_scores(v24_risk_scores)
-            st.plotly_chart(risk_score_fig, use_container_width=True)
+    with chart_col1:
+        fig_state = plot_bar_chart(outlier_population_by_state, "PERCENTAGE", "STATE", "Outlier Population by State", height=900)
+        st.plotly_chart(fig_state, use_container_width=True)
+
+    with chart_col2:
+        fig_race = plot_bar_chart(outlier_population_by_race, "PERCENTAGE", "RACE", "Outlier Population by Race", height=420)
+        st.plotly_chart(fig_race, use_container_width=True)
+
+        st.markdown(" ")  # Spacer
+        fig_risk = plot_risk_scores(v24_risk_scores)
+        st.plotly_chart(fig_risk, use_container_width=True)
 
 if __name__ == "__main__":
     main()
