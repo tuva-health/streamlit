@@ -9,7 +9,7 @@ Apps can be contributed by anyone and are organized within this repo for easy di
 ## 📁 Folder Structure
 
 ```
-analytics/
+streamlit/
 ├── shared/                  # Shared Python modules (helpers, config, plotting, etc.)
 │   ├── utils/
 │   │   └── helpers.py       # Common data loading or transformation logic
@@ -26,53 +26,40 @@ analytics/
 │
 ├── venv/ (optional)         # Virtual environment (not checked into version control)
 ├── requirements.txt         # Python dependencies for this app
-└── README.md                # You're here
+└── README.md                # You Are Here
 ```
 
 ---
-
-## 🆕 Setting Up a New Streamlit App (Developer Notes)
-
-To create a new app:
-
-1. Create a new folder inside `streamlit_apps/`, e.g. `streamlit_apps/my_new_app/`
-
-2. Inside that folder, add:
-   - `app.py` — your main Streamlit entry point    
-   - `.streamlit/` folder with:
-     - `config.toml`
-     - `secrets.toml`
-   - *(Optional)* `pages/` subfolder for multipage apps
-
-3. Use shared code from `shared/utils/` (e.g. `helpers.get_table_data()`)
-
-4. Follow the setup instructions below to install and run it locally
-
----
-
 ## ⚙️ Setup & Installation
+
+To get started, ensure you have a python installation with a version <3.13, since many of the requirements are not supported in this version of python. Once you have that installed, follow the steps below  to run the existing streamlit apps in this repository. 
 
 ### 1. Prerequisites
 - Python (>=3.8, <3.13)
 - pip (Python package installer)
 - Git
-- Access to a Snowflake account (if needed for the app)
+- Access to a database, or csv files depending on the requirements in the app-specific README.md files (in sub-folders under "streamlit_apps" folder)
 
 ### 2. Clone the Repository
 
 ```bash
-git clone https://github.com/tuva-health/analytics.git
-cd analytics
+git clone https://github.com/tuva-health/streamlit.git
+cd streamlit
 ```
 
 ### 3. Create a Virtual Environment & Install Dependencies:
 
 #### 💻 macOS/Linux
 ```bash
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
+```
+
+note - if requirements fail to install, check your python version to ensure your virtual environment (venv) is using a version <3.13>
+```bash
+python --version
 ```
 
 #### 🪟 Windows
@@ -85,7 +72,7 @@ pip install -r requirements.txt
 
 ---
 
-### 4. Configure Snowflake Credentials (if needed)
+### 4. Check the readme file for your specific app to determine if it requires Snowflake access. If required follow this step to configure Snowflake credentials (only if needed):
 
 Create the following file inside your app folder (e.g. `streamlit_apps/tuva_template/.streamlit/secrets.toml`):
 
@@ -144,6 +131,24 @@ If you're using `externalbrowser` as the authenticator, it will open a tab for l
 - If Snowflake access errors appear, verify you have the necessary permissions in your role
 
 ---
+
+## 🆕 Setting Up a New Streamlit App (Developer Notes)
+
+To create a new app:
+
+1. Create a new folder inside `streamlit_apps/`, e.g. `streamlit_apps/my_new_app/`
+
+2. Inside that folder, add:
+   - `app.py` — your main Streamlit entry point    
+   - `.streamlit/` folder with:
+     - `config.toml`
+     - `secrets.toml`
+   - *(Optional)* `pages/` subfolder for multipage apps
+
+3. Use shared code from `shared/utils/` (e.g. `helpers.get_table_data()`)
+
+4. Follow the setup instructions above to install and run it locally
+
 
 ## 📄 License
 
